@@ -1,0 +1,479 @@
+/**
+ * ProviderDashboard.jsx
+ * ---------------------
+ * Location: src/pages/ProviderDashboard.jsx
+ *
+ * The dashboard view for a logged-in scholarship provider.
+ * Allows managing listings (CRUD) and tracking/approving applications.
+ */
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import "./ProviderDashboard.css";
+import Api from "../service/Api";
+
+export default function ProviderDashboard() {
+  const navigate = useNavigate();
+  const [provider, setProvider] = useState({ orgName: "Provider Org", contactName: "" });
+  const [scholarships, setScholarships] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Form State for creating a scholarship
+  const [newScholarship, setNewScholarship] = useState({
+    name: "",
+    providerName: "",
+    description: "",
+    amount: "",
+    deadline: "",
+    level: "Select level",
+    field: "Select field",
+    country: "Select country",
+    requirements: ""
+  });
+  const [creating, setCreating] = useState(false);
+
+  const fetchProviderData = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch Provider Profile details
+      const profileRes = await Api.get("/api/auth/profile");
+      setProvider({
+        orgName: profileRes.data.org_name || "Organisation",
+        contactName: profileRes.data.contact_name || "Representative"
+      });
+
+      // Automatically prefill providerName in the form
+      setNewScholarship(prev => ({
+        ...prev,
+        providerName: profileRes.data.org_name || ""
+      }));
+
+      // 2. Fetch Provider's Listed Scholarships
+      const scholarshipsRes = await Api.get("/api/scholarships/provider");
+      setScholarships(scholarshipsRes.data);
+
+      // 3. Fetch Applications submitted to Provider's Scholarships
+      const appsRes = await Api.get("/api/applications/provider");
+      setApplications(appsRes.data);
+
+    } catch (e) {
+      console.error("Provider Dashboard Load Error:", e);
+      toast.error("Failed to load provider data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProviderData();
+  }, []);
+
+  const handleCreateScholarship = async (e) => {
+    e.preventDefault();
+    
+    // Validations
+    if (!newScholarship.name.trim() || !newScholarship.description.trim() || !newScholarship.amount.trim() || !newScholarship.deadline) {
+      toast.error("Please fill in all core scholarship details.");
+      return;
+    }
+    if (newScholarship.level === "Select level" || newScholarship.field === "Select field" || newScholarship.country === "Select country") {
+      toast.error("Please select specific eligibility criteria (Level, Field, Country).");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      await Api.post("/api/scholarships", newScholarship);
+      toast.success("Scholarship listed successfully!");
+      
+      // Reset form (except providerName)
+      setNewScholarship(prev => ({
+        name: "",
+        providerName: prev.providerName,
+        description: "",
+        amount: "",
+        deadline: "",
+        level: "Select level",
+        field: "Select field",
+        country: "Select country",
+        requirements: ""
+      }));
+
+      // Reload listings
+      const listRes = await Api.get("/api/scholarships/provider");
+      setScholarships(listRes.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create scholarship listing.");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteScholarship = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this scholarship listing? All associated applications will also be deleted.")) {
+      return;
+    }
+
+    try {
+      await Api.delete(`/api/scholarships/${id}`);
+      toast.success("Scholarship listing deleted successfully.");
+      
+      // Reload
+      fetchProviderData();
+    } catch (error) {
+      toast.error("Failed to delete scholarship.");
+    }
+  };
+
+  const handleUpdateStatus = async (applicationId, status) => {
+    try {
+      await Api.patch(`/api/applications/${applicationId}/status`, { status });
+      toast.success(`Application status updated to ${status.replace("_", " ")}.`);
+      
+      // Reload applications list
+      const appsRes = await Api.get("/api/applications/provider");
+      setApplications(appsRes.data);
+    } catch (error) {
+      toast.error("Failed to update application status.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
+
+  // Metrics
+  const activeCount = scholarships.length;
+  const totalAppsCount = applications.length;
+  const approvedCount = applications.filter(a => a.status === "approved").length;
+  const reviewPendingCount = applications.filter(a => a.status === "submitted").length;
+
+  const LEVELS = [
+    "Select level",
+    "High School / Secondary",
+    "Undergraduate (Bachelor's)",
+    "Postgraduate (Master's)",
+    "Doctoral (PhD)",
+    "Postdoctoral",
+    "Vocational / Certificate",
+    "All Levels"
+  ];
+
+  const FIELDS = [
+    "Select field",
+    "Arts & Humanities",
+    "Business & Management",
+    "Computer Science & IT",
+    "Education",
+    "Engineering & Technology",
+    "Environment & Sustainability",
+    "Law",
+    "Medicine & Health",
+    "Natural Sciences",
+    "Social Sciences",
+    "All Fields"
+  ];
+
+  const COUNTRIES = [
+    "Select country",
+    "Global",
+    "Australia", "Bangladesh", "Brazil", "Canada", "China",
+    "Egypt", "Ethiopia", "France", "Germany", "Ghana",
+    "India", "Indonesia", "Japan", "Kenya", "Mexico",
+    "Nepal", "Nigeria", "Pakistan", "Philippines", "Sierra Leone",
+    "South Africa", "South Korea", "Sri Lanka", "Tanzania", "Uganda",
+    "United Kingdom", "United States", "Vietnam", "Zimbabwe", "Other"
+  ];
+
+  if (loading) {
+    return (
+      <div className="sd-loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0F172A', color: 'white' }}>
+        <div className="auth-spinner" style={{ width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTop: '4px solid #2563EB', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ marginTop: '16px', fontSize: '18px', fontWeight: '500' }}>Loading provider dashboard...</p>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pd-page">
+      {/* ── HEADER BANNER ────────────────────────────────────────────── */}
+      <header className="pd-welcome-banner">
+        <div>
+          <h1 className="pd-welcome-heading">{provider.orgName}</h1>
+          <p className="pd-welcome-sub">Welcome back, {provider.contactName} · Manage your listings and applications</p>
+        </div>
+        <button className="pd-btn pd-btn-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={handleLogout}>
+          Sign Out
+        </button>
+      </header>
+
+      {/* ── STATISTICS ROW ────────────────────────────────────────────── */}
+      <div className="pd-stats-grid">
+        <div className="pd-stat-card">
+          <div className="pd-stat-header">
+            <span className="pd-stat-label">Active Listings</span>
+            <span className="pd-stat-icon">🎓</span>
+          </div>
+          <div className="pd-stat-value">{activeCount}</div>
+        </div>
+        <div className="pd-stat-card">
+          <div className="pd-stat-header">
+            <span className="pd-stat-label">Total Applications</span>
+            <span className="pd-stat-icon">📥</span>
+          </div>
+          <div className="pd-stat-value">{totalAppsCount}</div>
+        </div>
+        <div className="pd-stat-card">
+          <div className="pd-stat-header">
+            <span className="pd-stat-label">Awards Approved</span>
+            <span className="pd-stat-icon">✅</span>
+          </div>
+          <div className="pd-stat-value">{approvedCount}</div>
+        </div>
+        <div className="pd-stat-card">
+          <div className="pd-stat-header">
+            <span className="pd-stat-label">Review Pending</span>
+            <span className="pd-stat-icon">⏳</span>
+          </div>
+          <div className="pd-stat-value">{reviewPendingCount}</div>
+        </div>
+      </div>
+
+      {/* ── MAIN DASHBOARD GRID ────────────────────────────────────────────── */}
+      <div className="pd-grid">
+        {/* LEFT COLUMN: ACTIVE LISTINGS & APPLICATIONS */}
+        <div>
+          {/* APPLICATIONS REVIEW SECTION */}
+          <section className="pd-section">
+            <div className="pd-section-header">
+              <h2 className="pd-section-heading">Applications Received ({totalAppsCount})</h2>
+            </div>
+            {applications.length > 0 ? (
+              <div>
+                {applications.map((app) => (
+                  <div key={app.application_id} className="pd-app-card">
+                    <div className="pd-app-student-info">
+                      <div>
+                        <strong style={{ fontSize: "16px", color: "white" }}>
+                          {app.first_name} {app.last_name}
+                        </strong>
+                        <div style={{ fontSize: "13px", color: "var(--pd-text-muted)", marginTop: "4px" }}>
+                          {app.student_email} · 📍 {app.student_country}
+                        </div>
+                      </div>
+                      <span className={`status-badge ${app.status}`}>
+                        {app.status.replace("_", " ")}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px", fontSize: "13px", color: "#94A3B8" }}>
+                      <div><strong>GPA Score:</strong> {app.student_gpa || "N/A"}</div>
+                      <div><strong>Study Level:</strong> {app.student_level || "N/A"}</div>
+                      <div><strong>Field of Study:</strong> {app.student_field || "N/A"}</div>
+                    </div>
+
+                    <div style={{ fontSize: "13px", color: "var(--pd-text-muted)", marginBottom: "4px" }}>
+                      <strong>Applied for:</strong> {app.scholarship_name} ({app.scholarship_amount})
+                    </div>
+
+                    <div className="pd-app-essay">
+                      <strong>Applicant Essay Statement:</strong>
+                      <p style={{ marginTop: "6px", whiteSpace: "pre-line" }}>{app.essay || "No statement provided."}</p>
+                    </div>
+
+                    <div className="pd-app-actions">
+                      {app.status === "submitted" && (
+                        <button className="pd-btn pd-btn-outline" onClick={() => handleUpdateStatus(app.application_id, "under_review")}>
+                          Mark Under Review
+                        </button>
+                      )}
+                      {app.status === "under_review" && (
+                        <button className="pd-btn pd-btn-outline" style={{ borderColor: "#A855F7", color: "#A855F7" }} onClick={() => handleUpdateStatus(app.application_id, "shortlisted")}>
+                          Shortlist
+                        </button>
+                      )}
+                      {app.status !== "approved" && app.status !== "rejected" && (
+                        <>
+                          <button className="pd-btn pd-btn-danger" onClick={() => handleUpdateStatus(app.application_id, "rejected")}>
+                            Reject
+                          </button>
+                          <button className="pd-btn pd-btn-primary" style={{ background: "#10B981" }} onClick={() => handleUpdateStatus(app.application_id, "approved")}>
+                            Approve Award
+                          </button>
+                        </>
+                      )}
+                      {(app.status === "approved" || app.status === "rejected") && (
+                        <span style={{ fontSize: "13px", color: "var(--pd-text-muted)" }}>
+                          Decision made on {new Date(app.submitted_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "var(--pd-text-muted)", fontSize: "14px" }}>No applications received yet for your listings.</p>
+            )}
+          </section>
+
+          {/* ACTIVE LISTINGS LIST */}
+          <section className="pd-section">
+            <div className="pd-section-header">
+              <h2 className="pd-section-heading">Your Active Listings ({activeCount})</h2>
+            </div>
+            {scholarships.length > 0 ? (
+              <ul className="pd-list">
+                {scholarships.map((s) => (
+                  <li key={s.id} className="pd-item">
+                    <div className="pd-item-header">
+                      <div>
+                        <h3 className="pd-item-title">{s.name}</h3>
+                        <div className="pd-item-meta">
+                          <span>💰 {s.amount}</span>
+                          <span>⏰ Deadline: {new Date(s.deadline).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <button className="pd-btn pd-btn-danger" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => handleDeleteScholarship(s.id)}>
+                        Delete Listing
+                      </button>
+                    </div>
+                    <p style={{ fontSize: "13.5px", color: "#CBD5E1", marginTop: "12px", lineHeight: "1.4" }}>
+                      {s.description}
+                    </p>
+                    <div style={{ marginTop: "12px", display: "flex", gap: "8px", flexWrap: "wrap", fontSize: "12px" }}>
+                      <span style={{ background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px", color: "var(--pd-text-muted)" }}>Level: {s.level}</span>
+                      <span style={{ background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px", color: "var(--pd-text-muted)" }}>Field: {s.field}</span>
+                      <span style={{ background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px", color: "var(--pd-text-muted)" }}>Country: {s.country}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ color: "var(--pd-text-muted)", fontSize: "14px" }}>You have not listed any scholarships yet. Use the sidebar to create one!</p>
+            )}
+          </section>
+        </div>
+
+        {/* RIGHT COLUMN: CREATE SCHOLARSHIP FORM */}
+        <div>
+          <section className="pd-section">
+            <h2 className="pd-section-heading" style={{ marginBottom: "20px" }}>Post a Scholarship</h2>
+            <form className="pd-form" onSubmit={handleCreateScholarship}>
+              <div className="pd-input-group">
+                <label htmlFor="s-name">Scholarship Name</label>
+                <input
+                  id="s-name"
+                  type="text"
+                  className="pd-input"
+                  placeholder="e.g. Master's STEM Grant"
+                  value={newScholarship.name}
+                  onChange={(e) => setNewScholarship({ ...newScholarship, name: e.target.value })}
+                />
+              </div>
+
+              <div className="pd-row-split">
+                <div className="pd-input-group">
+                  <label htmlFor="s-amount">Award Amount</label>
+                  <input
+                    id="s-amount"
+                    type="text"
+                    className="pd-input"
+                    placeholder="e.g. $10,000"
+                    value={newScholarship.amount}
+                    onChange={(e) => setNewScholarship({ ...newScholarship, amount: e.target.value })}
+                  />
+                </div>
+                <div className="pd-input-group">
+                  <label htmlFor="s-deadline">Deadline Date</label>
+                  <input
+                    id="s-deadline"
+                    type="date"
+                    className="pd-input"
+                    value={newScholarship.deadline}
+                    onChange={(e) => setNewScholarship({ ...newScholarship, deadline: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="s-level">Target Education Level</label>
+                <select
+                  id="s-level"
+                  className="pd-input"
+                  value={newScholarship.level}
+                  onChange={(e) => setNewScholarship({ ...newScholarship, level: e.target.value })}
+                >
+                  {LEVELS.map(l => (
+                    <option key={l} value={l} disabled={l === "Select level"}>{l}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="s-field">Target Field of Study</label>
+                <select
+                  id="s-field"
+                  className="pd-input"
+                  value={newScholarship.field}
+                  onChange={(e) => setNewScholarship({ ...newScholarship, field: e.target.value })}
+                >
+                  {FIELDS.map(f => (
+                    <option key={f} value={f} disabled={f === "Select field"}>{f}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="s-country">Target Region / Nationality</label>
+                <select
+                  id="s-country"
+                  className="pd-input"
+                  value={newScholarship.country}
+                  onChange={(e) => setNewScholarship({ ...newScholarship, country: e.target.value })}
+                >
+                  {COUNTRIES.map(c => (
+                    <option key={c} value={c} disabled={c === "Select country"}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="s-desc">Description</label>
+                <textarea
+                  id="s-desc"
+                  className="pd-textarea"
+                  rows={4}
+                  placeholder="Describe the opportunity details and funding terms..."
+                  value={newScholarship.description}
+                  onChange={(e) => setNewScholarship({ ...newScholarship, description: e.target.value })}
+                />
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="s-req">Requirements / Qualifications (optional)</label>
+                <input
+                  id="s-req"
+                  type="text"
+                  className="pd-input"
+                  placeholder="e.g. GPA 3.5+, Female students"
+                  value={newScholarship.requirements}
+                  onChange={(e) => setNewScholarship({ ...newScholarship, requirements: e.target.value })}
+                />
+              </div>
+
+              <button type="submit" className="pd-btn pd-btn-primary" style={{ width: "100%", marginTop: "8px" }} disabled={creating}>
+                {creating ? "Posting Listing..." : "Post Scholarship Opportunity"}
+              </button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

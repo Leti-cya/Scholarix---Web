@@ -1,15 +1,27 @@
-const express = require("express")
-const cors = require("cors")
-const dotenv = require("dotenv")
-dotenv.config()
+require("dotenv").config();
 
-const app = express()
+const express = require("express");
+const cors = require("cors");
 
-app.use(cors())
-app.use(express.json())
+const authRoutes = require("./route/authRoute");
+const scholarshipRoutes = require("./route/scholarshipRoute");
+const applicationRoutes = require("./route/applicationRoute");
 
-const PORT = process.env.PORT || 8000
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.get("/", (req, res) => {
+    res.send("Scholarix API Running");
+});
+
+app.use("/api/auth", authRoutes);
+app.use("/api/scholarships", scholarshipRoutes);
+app.use("/api/applications", applicationRoutes);
+
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
-})
+    console.log(`Server running on port ${PORT}`);
+});

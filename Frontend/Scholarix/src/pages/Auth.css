@@ -1,0 +1,1577 @@
+/*
+ * Auth.css
+ * ─────────────────────────────────────────────────────────
+ * Location: src/pages/Auth.css
+ *
+ * Shared stylesheet for ALL Scholarix authentication pages:
+ *   · Login
+ *   · ForgotPassword
+ *   · SignUp
+ *
+ * All classes are prefixed with "auth-" to avoid collisions.
+ * Design tokens exactly match LandingPage.css so every auth
+ * page feels like a natural extension of the marketing site.
+ *
+ * Contents:
+ *   1.  Design Tokens
+ *   2.  Reset & Base
+ *   3.  Root Layout (split panel)
+ *   4.  Left Panel (navy brand side)
+ *   5.  Right Panel (white form side)
+ *   6.  Progress Bar (sign-up wizard)
+ *   7.  Form Panel & Headings
+ *   8.  Form Fields (input, select, textarea)
+ *   9.  Password Strength Meter
+ *  10.  Buttons
+ *  11.  Social Sign-in Buttons
+ *  12.  Role Selection Cards (sign-up step 1)
+ *  13.  Checkbox
+ *  14.  Alerts & Inline Feedback
+ *  15.  Sent / Step-list (forgot password)
+ *  16.  Success Screen
+ *  17.  Auth Logo
+ *  18.  Misc utilities
+ *  19.  Responsive breakpoints
+ *  20.  Accessibility & Motion
+ */
+
+
+/* ═══════════════════════════════════════════════════════
+   1. DESIGN TOKENS
+   Identical values to LandingPage.css — auth pages share
+   the same palette so the brand feels continuous.
+═══════════════════════════════════════════════════════ */
+:root {
+  /* Brand */
+  --auth-navy:         #0D1B2A;
+  --auth-navy-mid:     #162336;
+  --auth-navy-light:   #1E3251;
+  --auth-blue:         #1D4ED8;
+  --auth-blue-hover:   #1e40af;
+  --auth-blue-light:   #EFF6FF;
+  --auth-blue-border:  #BFDBFE;
+
+  /* Gold */
+  --auth-gold:         #F5C842;
+  --auth-gold-dim:     #D4A017;
+  --auth-gold-pale:    #FEF9E7;
+
+  /* Semantic */
+  --auth-green:        #059669;
+  --auth-green-light:  #ECFDF5;
+  --auth-teal:         #0D9488;
+  --auth-amber:        #D97706;
+  --auth-red:          #DC2626;
+  --auth-red-light:    #FEF2F2;
+
+  /* Neutrals */
+  --auth-bg:           #F0F4F8;
+  --auth-surface:      #FFFFFF;
+  --auth-border:       #E2E8F0;
+  --auth-border-dark:  #CBD5E1;
+  --auth-text:         #1E293B;
+  --auth-text-muted:   #64748B;
+  --auth-text-faint:   #94A3B8;
+
+  /* Type */
+  --auth-font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --auth-font-body:    "Inter", system-ui, -apple-system, sans-serif;
+
+  /* Shape */
+  --auth-radius-sm:  6px;
+  --auth-radius:     12px;
+  --auth-radius-lg:  20px;
+
+  /* Shadow */
+  --auth-shadow-sm:  0 1px 4px rgba(0,0,0,.07);
+  --auth-shadow:     0 4px 16px rgba(0,0,0,.09);
+  --auth-shadow-md:  0 8px 32px rgba(0,0,0,.12);
+
+  /* Transition */
+  --auth-transition: 180ms ease;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   2. RESET & BASE
+═══════════════════════════════════════════════════════ */
+.auth-root *,
+.auth-root *::before,
+.auth-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.auth-root {
+  font-family: var(--auth-font-body);
+  color: var(--auth-text);
+  background: var(--auth-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   3. ROOT LAYOUT — Split Panel
+   Left (brand): 42% navy.  Right (form): 58% white.
+   Both panels fill the full viewport height.
+═══════════════════════════════════════════════════════ */
+.auth-root {
+  display: grid;
+  grid-template-columns: 42fr 58fr;
+  min-height: 100vh;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   4. LEFT PANEL — Brand side
+   Default (.auth-left): full dark navy — used by SignUp.
+   .auth-left--light: softer gradient — used by Login and
+   ForgotPassword where a lighter feel suits the content.
+═══════════════════════════════════════════════════════ */
+.auth-left {
+  background: linear-gradient(160deg, var(--auth-navy) 0%, var(--auth-navy-light) 100%);
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/*
+ * Lighter variant for Login page.
+ * Slightly less saturated — the illustration provides the
+ * visual interest so the background doesn't need to compete.
+ */
+.auth-left--light {
+  background: linear-gradient(
+    150deg,
+    #0f2744 0%,       /* deep navy — brand anchor */
+    #1a3a62 55%,      /* mid blue — lightened from navy-light */
+    #1d3d6b 100%      /* subtle blue-navy at the bottom */
+  );
+}
+
+/* Scrollbar */
+.auth-left::-webkit-scrollbar { width: 4px; }
+.auth-left::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+.auth-left__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Reduced from 32px — illustration fills the vertical space */
+  padding: 20px 0;
+}
+
+.auth-left__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--auth-gold);
+  margin-bottom: 12px;
+}
+
+.auth-left__heading {
+  font-family: var(--auth-font-display);
+  /*
+   * Slightly smaller than before (was clamp(2rem, 3.2vw, 2.8rem)).
+   * The scholarship copy is longer so we size down a notch
+   * to keep the heading tight and readable.
+   */
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+/* Gold italic — the signature last-line accent */
+.auth-left__heading-accent {
+  color: var(--auth-gold);
+  font-style: italic;
+}
+
+.auth-left__sub {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,.55);
+  line-height: 1.65;
+  max-width: 320px;
+  /* Reduced from 28px — tighter spacing before illustration */
+  margin-bottom: 20px;
+}
+
+/*
+ * Feature bullet list styles kept for ForgotPassword & SignUp
+ * which still use the full left-panel content. Login no longer
+ * renders .auth-left__features but the CSS stays so those pages
+ * are unaffected.
+ */
+.auth-left__features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.auth-left__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: rgba(255,255,255,.75);
+  line-height: 1.4;
+}
+
+.auth-left__feature-check {
+  width: 20px;
+  height: 20px;
+  background: rgba(245,200,66,.15);
+  border: 1px solid rgba(245,200,66,.35);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  color: var(--auth-gold);
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-weight: 800;
+}
+
+/* ── Illustration container (Login only) ── */
+.auth-left__illustration {
+  margin: 4px 0 20px;
+  /*
+   * Allow the SVG to fill the panel width minus padding.
+   * max-height keeps it from dominating on tall viewports.
+   */
+  width: 100%;
+  max-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-panel-svg {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  /* Soft fade-in — adds polish without animation complexity */
+  opacity: 0;
+  animation: auth-panel-fade 0.5s ease 0.15s forwards;
+}
+
+@keyframes auth-panel-fade {
+  to { opacity: 1; }
+}
+
+/* Quote block — used by Login, ForgotPassword, and SignUp */
+.auth-left__quote {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: var(--auth-radius);
+  padding: 16px 18px;   /* was 18px 20px — slightly tighter */
+  margin-bottom: 20px;  /* was 24px */
+}
+
+.auth-left__quote-text {
+  font-size: 0.82rem;   /* was 0.85rem — fractionally smaller */
+  color: rgba(255,255,255,.7);
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.auth-left__quote-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.auth-left__quote-author {
+  font-family: var(--auth-font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--auth-gold);
+}
+
+.auth-left__quote-role {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,.4);
+}
+
+/* Trust stats row (used in SignUp left panel) */
+.auth-left__trust {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--auth-radius);
+  padding: 16px 0;
+}
+
+.auth-trust-item {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.auth-trust-value {
+  font-family: var(--auth-font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--auth-gold);
+  line-height: 1;
+}
+
+.auth-trust-label {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,.4);
+  font-weight: 500;
+}
+
+.auth-trust-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255,255,255,.1);
+  flex-shrink: 0;
+}
+
+.auth-left__foot {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   5. RIGHT PANEL — White form side
+═══════════════════════════════════════════════════════ */
+.auth-right {
+  background: var(--auth-surface);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 32px;
+  overflow-y: auto;
+}
+
+.auth-right::-webkit-scrollbar { width: 4px; }
+.auth-right::-webkit-scrollbar-thumb { background: var(--auth-border-dark); border-radius: 2px; }
+
+
+/* ═══════════════════════════════════════════════════════
+   6. PROGRESS BAR — Sign-up wizard step indicator
+═══════════════════════════════════════════════════════ */
+.auth-progress {
+  margin-bottom: 32px;
+}
+
+.auth-progress__bars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.auth-progress__segment {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-progress__bar {
+  height: 4px;
+  background: var(--auth-border);
+  border-radius: 2px;
+  transition: background var(--auth-transition);
+}
+
+/* Active step — blue fill */
+.seg--active .auth-progress__bar {
+  background: var(--auth-blue);
+}
+
+/* Completed step — green fill */
+.seg--done .auth-progress__bar {
+  background: var(--auth-green);
+}
+
+.auth-progress__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--auth-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.seg--active .auth-progress__label {
+  color: var(--auth-blue);
+}
+
+.seg--done .auth-progress__label {
+  color: var(--auth-green);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   7. FORM PANEL & HEADINGS
+═══════════════════════════════════════════════════════ */
+.auth-form-panel {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* gaps handled per-element for precision */
+}
+
+/* Centred variant — used on success and "sent" screens */
+.auth-form-panel--centered {
+  align-items: center;
+  text-align: center;
+}
+
+.auth-form__heading {
+  font-family: var(--auth-font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--auth-navy);
+  line-height: 1.15;
+  margin-bottom: 8px;
+}
+
+.auth-form__sub {
+  font-size: 0.9rem;
+  color: var(--auth-text-muted);
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+
+/* Back navigation link above some forms */
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--auth-text-muted);
+  text-decoration: none;
+  margin-bottom: 28px;
+  transition: color var(--auth-transition);
+}
+
+.auth-back-link:hover { color: var(--auth-blue); }
+
+/* Icon badge — the decorative circle above form headings */
+.auth-icon-badge {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+  margin-bottom: 20px;
+}
+
+.auth-icon-badge--blue   { background: var(--auth-blue-light);  }
+.auth-icon-badge--green  { background: var(--auth-green-light); }
+.auth-icon-badge--gold   { background: var(--auth-gold-pale);   }
+
+
+/* ═══════════════════════════════════════════════════════
+   8. FORM FIELDS
+═══════════════════════════════════════════════════════ */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.auth-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.auth-field__label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--auth-text);
+}
+
+.auth-field__optional {
+  font-weight: 400;
+  color: var(--auth-text-faint);
+}
+
+/* Icon + input wrapper */
+.auth-field__wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-field__icon {
+  position: absolute;
+  left: 13px;
+  font-size: 0.9rem;
+  color: var(--auth-text-faint);
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+}
+
+/* Base input — used as single class or with modifiers */
+.auth-field__input {
+  width: 100%;
+  height: 46px;
+  border: 1.5px solid var(--auth-border);
+  border-radius: var(--auth-radius-sm);
+  padding: 0 14px;
+  font-family: var(--auth-font-body);
+  font-size: 0.9rem;
+  color: var(--auth-text);
+  background: var(--auth-surface);
+  outline: none;
+  transition: border-color var(--auth-transition), box-shadow var(--auth-transition);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.auth-field__input::placeholder {
+  color: var(--auth-text-faint);
+}
+
+/* Left padding offset when icon is present */
+.auth-field__input--icon {
+  padding-left: 38px;
+}
+
+/* Focus ring — uses gold to match the brand accent */
+.auth-field__input:focus {
+  border-color: var(--auth-blue);
+  box-shadow: 0 0 0 3px rgba(29,78,216,.12);
+}
+
+/* Error state */
+.auth-field__input--error {
+  border-color: var(--auth-red);
+  background: var(--auth-red-light);
+}
+
+.auth-field__input--error:focus {
+  border-color: var(--auth-red);
+  box-shadow: 0 0 0 3px rgba(220,38,38,.1);
+}
+
+/* Select — needs arrow indicator since appearance is reset */
+.auth-field__select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* Textarea */
+.auth-field__textarea {
+  height: auto;
+  padding: 12px 14px;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Show/hide password toggle button */
+.auth-field__toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--auth-blue);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background var(--auth-transition);
+}
+
+.auth-field__toggle:hover {
+  background: var(--auth-blue-light);
+}
+
+/* Error text below an invalid field */
+.auth-field__error {
+  font-size: 0.78rem;
+  color: var(--auth-red);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Neutral hint text (e.g. "Passwords match") */
+.auth-field__hint {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.hint--ok   { color: var(--auth-green); }
+.hint--warn { color: var(--auth-amber); }
+
+/* Highlighted email address in body text */
+.auth-highlight {
+  color: var(--auth-navy);
+  font-weight: 700;
+}
+
+/* Two-column name row */
+.auth-name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.auth-name-row .auth-field {
+  margin-bottom: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   9. PASSWORD STRENGTH METER
+═══════════════════════════════════════════════════════ */
+.auth-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.auth-strength__bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.auth-strength__bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  transition: background var(--auth-transition);
+}
+
+.auth-strength__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 46px;
+  text-align: right;
+  transition: color var(--auth-transition);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  10. BUTTONS
+═══════════════════════════════════════════════════════ */
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: var(--auth-font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 22px;
+  border-radius: var(--auth-radius-sm);
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1;
+  transition: background var(--auth-transition),
+              border-color var(--auth-transition),
+              transform var(--auth-transition),
+              box-shadow var(--auth-transition);
+  white-space: nowrap;
+}
+
+.auth-btn:focus-visible {
+  outline: 3px solid var(--auth-gold);
+  outline-offset: 3px;
+}
+
+.auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Primary — blue fill */
+.auth-btn--primary {
+  background: var(--auth-blue);
+  color: #fff;
+  border-color: var(--auth-blue);
+}
+
+.auth-btn--primary:not(:disabled):hover {
+  background: var(--auth-blue-hover);
+  border-color: var(--auth-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(29,78,216,.3);
+}
+
+/* Outline — bordered, transparent */
+.auth-btn--outline {
+  background: transparent;
+  color: var(--auth-navy);
+  border-color: var(--auth-border-dark);
+}
+
+.auth-btn--outline:not(:disabled):hover {
+  border-color: var(--auth-blue);
+  color: var(--auth-blue);
+}
+
+/* Ghost — minimal, for secondary/back actions */
+.auth-btn--ghost {
+  background: transparent;
+  color: var(--auth-text-muted);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.auth-btn--ghost:not(:disabled):hover {
+  background: var(--auth-bg);
+  color: var(--auth-text);
+}
+
+/* Full-width modifier */
+.auth-btn--full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Grows to fill remaining row space */
+.auth-btn--grow {
+  flex: 1;
+}
+
+/* Back + primary in same row */
+.auth-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+/* Loading spinner inside button */
+.auth-btn__loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: auth-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  11. SOCIAL SIGN-IN BUTTONS
+═══════════════════════════════════════════════════════ */
+.auth-social-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.auth-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  border: 1.5px solid var(--auth-border);
+  border-radius: var(--auth-radius-sm);
+  background: var(--auth-surface);
+  font-family: var(--auth-font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--auth-text);
+  cursor: pointer;
+  transition: border-color var(--auth-transition), box-shadow var(--auth-transition);
+}
+
+.auth-social-btn:hover {
+  border-color: var(--auth-border-dark);
+  box-shadow: var(--auth-shadow-sm);
+}
+
+.auth-social-btn:focus-visible {
+  outline: 3px solid var(--auth-gold);
+  outline-offset: 2px;
+}
+
+.auth-social-btn__icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* OR divider between social and email form */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 20px;
+  font-size: 0.78rem;
+  color: var(--auth-text-faint);
+  font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--auth-border);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  12. ROLE SELECTION CARDS (Sign-up step 1)
+═══════════════════════════════════════════════════════ */
+.auth-role-fieldset {
+  border: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.auth-role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.auth-role-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border: 2px solid var(--auth-border);
+  border-radius: var(--auth-radius);
+  cursor: pointer;
+  transition: border-color var(--auth-transition),
+              background var(--auth-transition),
+              box-shadow var(--auth-transition);
+  background: var(--auth-surface);
+}
+
+.auth-role-card:hover {
+  border-color: var(--auth-blue-border);
+  background: var(--auth-blue-light);
+}
+
+.auth-role-card--selected {
+  border-color: var(--auth-gold);
+  background: var(--auth-gold-pale);
+  box-shadow: 0 0 0 1px var(--auth-gold);
+}
+
+/* Hide the native radio but keep it accessible */
+.auth-role-card__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.auth-role-card__icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.auth-role-card__label {
+  font-family: var(--auth-font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--auth-navy);
+}
+
+.auth-role-card__desc {
+  font-size: 0.72rem;
+  color: var(--auth-text-muted);
+  line-height: 1.4;
+}
+
+/* Gold checkmark badge on selected card */
+.auth-role-card__check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background: var(--auth-gold);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--auth-navy);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  13. CHECKBOX
+═══════════════════════════════════════════════════════ */
+.auth-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  margin-top: 16px;
+  margin-bottom: 4px;
+}
+
+.auth-checkbox__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.auth-checkbox__box {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--auth-border-dark);
+  border-radius: 4px;
+  background: var(--auth-surface);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: background var(--auth-transition), border-color var(--auth-transition);
+}
+
+/* Custom checked appearance */
+.auth-checkbox__input:checked + .auth-checkbox__box {
+  background: var(--auth-blue);
+  border-color: var(--auth-blue);
+}
+
+.auth-checkbox__input:checked + .auth-checkbox__box::after {
+  content: "✓";
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.auth-checkbox__input:focus-visible + .auth-checkbox__box {
+  outline: 3px solid var(--auth-gold);
+  outline-offset: 2px;
+}
+
+.auth-checkbox__label {
+  font-size: 0.82rem;
+  color: var(--auth-text-muted);
+  line-height: 1.5;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  14. ALERTS & INLINE FEEDBACK
+═══════════════════════════════════════════════════════ */
+.auth-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--auth-radius-sm);
+  font-size: 0.825rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.auth-alert--error {
+  background: var(--auth-red-light);
+  border: 1px solid rgba(220,38,38,.25);
+  color: var(--auth-red);
+}
+
+.auth-alert--success {
+  background: var(--auth-green-light);
+  border: 1px solid rgba(5,150,105,.25);
+  color: var(--auth-green);
+}
+
+.auth-alert--info {
+  background: var(--auth-blue-light);
+  border: 1px solid var(--auth-blue-border);
+  color: var(--auth-blue);
+}
+
+/* Bottom sign-in / sign-up switch link */
+.auth-switch {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--auth-text-muted);
+  margin-top: 20px;
+}
+
+.auth-switch__link {
+  color: var(--auth-blue);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color var(--auth-transition);
+}
+
+.auth-switch__link:hover {
+  color: var(--auth-blue-hover);
+  text-decoration: underline;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  15. FORGOT PASSWORD — Refined styles
+  The old step-list approach has been replaced with a
+  minimal "sent" confirmation layout.
+  Old classes (.auth-steps-list, .auth-sent-actions) kept
+  as stubs so any external references don't break.
+═══════════════════════════════════════════════════════ */
+
+/*
+ * Sent state: large emoji icon centred above the heading.
+ * More emotive than the old numbered step list.
+ */
+.fp-sent-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  background: var(--auth-blue-light);
+  border-radius: var(--auth-radius);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  /* Subtle fade-in matches the left panel illustration */
+  animation: auth-panel-fade 0.4s ease both;
+}
+
+/*
+ * Email address shown in the sent confirmation.
+ * Bold + navy makes it easy to spot at a glance.
+ */
+.fp-email-highlight {
+  color: var(--auth-navy);
+  font-weight: 700;
+  word-break: break-all; /* prevents long emails from overflowing */
+}
+
+/*
+ * Small hint under the resend button.
+ * Deliberately faint — it's supporting info, not primary.
+ */
+.fp-hint {
+  font-size: 0.75rem;
+  color: var(--auth-text-faint);
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+/*
+ * Dark spinner variant — used inside outline (white bg) buttons
+ * where the default white spinner would be invisible.
+ */
+.auth-spinner--dark {
+  border-color: rgba(0,0,0,.15);
+  border-top-color: var(--auth-navy);
+}
+
+/* Left panel illustration container + SVG — shared with Login */
+.auth-left__illustration {
+  width: 100%;
+  max-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0 20px;
+}
+
+.auth-panel-svg {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  opacity: 0;
+  animation: auth-panel-fade 0.5s ease 0.15s forwards;
+}
+
+@keyframes auth-panel-fade {
+  to { opacity: 1; }
+}
+
+/* Lighter left panel gradient — used by Login + ForgotPassword */
+.auth-left--light {
+  background: linear-gradient(
+    150deg,
+    #0f2744 0%,
+    #1a3a62 55%,
+    #1d3d6b 100%
+  );
+}
+
+/* ── Stubs for old classes (kept for backwards compatibility) ── */
+.auth-steps-list       { display: none; }
+.auth-steps-list__item { display: none; }
+.auth-steps-list__num  { display: none; }
+.auth-sent-actions     { display: flex; flex-direction: column; gap: 10px; }
+.auth-sent-hint        { font-size: 0.75rem; color: var(--auth-text-faint);
+                          text-align: center; margin-top: 16px; line-height: 1.5; }
+
+
+/* ═══════════════════════════════════════════════════════
+  16. SUCCESS SCREEN
+═══════════════════════════════════════════════════════ */
+.auth-success-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--auth-navy), var(--auth-blue));
+  color: var(--auth-gold);
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+  margin: 0 auto 24px;
+  box-shadow: 0 0 0 12px rgba(29,78,216,.08);
+}
+
+.auth-success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.auth-success-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--auth-gold-pale);
+  border: 1px solid rgba(212,160,23,.3);
+  border-radius: var(--auth-radius-sm);
+  padding: 14px 16px;
+  font-size: 0.8rem;
+  color: var(--auth-text-muted);
+  line-height: 1.55;
+  text-align: left;
+  width: 100%;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  17. AUTH LOGO (shared across all auth pages)
+═══════════════════════════════════════════════════════ */
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.auth-logo__mark {
+  width: 36px;
+  height: 36px;
+  background: var(--auth-gold);
+  color: var(--auth-navy);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-family: var(--auth-font-display);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
+.auth-logo__text {
+  font-family: var(--auth-font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  18. MISC UTILITIES
+═══════════════════════════════════════════════════════ */
+
+/* "Remember me" / terms row */
+.auth-remember-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 16px;
+  font-size: 0.82rem;
+}
+
+.auth-forgot-link {
+  color: var(--auth-blue);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.82rem;
+  transition: color var(--auth-transition);
+}
+
+.auth-forgot-link:hover {
+  color: var(--auth-blue-hover);
+  text-decoration: underline;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  19. RESPONSIVE BREAKPOINTS
+═══════════════════════════════════════════════════════ */
+
+/* ── 1024px: Tablet — left panel narrows ── */
+@media (max-width: 1024px) {
+  .auth-root {
+    grid-template-columns: 38fr 62fr;
+  }
+
+  .auth-left {
+    padding: 32px 28px;
+  }
+
+  /*
+   * Heading already uses clamp() so it auto-scales with vw.
+   * Override with a safe floor value on narrow panels.
+   */
+  .auth-left__heading {
+    font-size: 1.55rem;
+  }
+
+  /* Illustration scales naturally; cap it on mid-size viewports */
+  .auth-left__illustration {
+    max-height: 160px;
+  }
+}
+
+/* ── 768px: Mobile — stack vertically, hide left panel ── */
+@media (max-width: 768px) {
+  .auth-root {
+    grid-template-columns: 1fr;
+    min-height: 100vh;
+  }
+
+  /* Hide the decorative left panel on small screens;
+     the logo appears in the form panel instead */
+  .auth-left {
+    display: none;
+  }
+
+  /* Illustration is inside the hidden left panel — also gone */
+  .auth-left__illustration {
+    display: none;
+  }
+
+  .auth-right {
+    padding: 40px 24px;
+    justify-content: flex-start;
+    align-items: stretch;
+  }
+
+  .auth-form-panel {
+    max-width: 100%;
+  }
+
+  /* Show the logo at the top of the form on mobile */
+  .auth-form-panel::before {
+    content: "";
+    display: block;
+  }
+
+  /* Role card grid: stack on mobile */
+  .auth-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Name row: stack on mobile */
+  .auth-name-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Social buttons: stack on mobile */
+  .auth-social-row {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-progress__bars {
+    gap: 4px;
+  }
+}
+
+/* ── 420px: Small phones ── */
+@media (max-width: 420px) {
+  .auth-right {
+    padding: 28px 16px 40px;
+  }
+
+  .auth-form__heading {
+    font-size: 1.5rem;
+  }
+
+  .auth-btn-row {
+    flex-direction: column;
+  }
+
+  .auth-btn-row .auth-btn--ghost {
+    order: 2;
+  }
+
+  .auth-btn-row .auth-btn--grow {
+    width: 100%;
+    order: 1;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+  20. ACCESSIBILITY & MOTION
+═══════════════════════════════════════════════════════ */
+
+/* Remove all transitions for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .auth-spinner {
+    animation: none;
+    border-top-color: transparent;
+    border: 2px solid rgba(255,255,255,.5);
+  }
+
+  .auth-btn,
+  .auth-field__input,
+  .auth-role-card,
+  .auth-strength__bar,
+  .auth-progress__bar,
+  .auth-social-btn {
+    transition: none;
+  }
+}
+
+/* Visible focus ring for keyboard navigation */
+.auth-field__input:focus-visible {
+  outline: 3px solid var(--auth-gold);
+  outline-offset: 1px;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   LOGIN-SPECIFIC STYLES
+   Added here rather than a separate file so Auth.css
+   remains the single import for all auth pages.
+═══════════════════════════════════════════════════════ */
+
+/* ── Role tab switcher (Student | Provider) ── */
+.login-tabs {
+  display: flex;
+  background: var(--auth-bg);
+  border-radius: var(--auth-radius-sm);
+  padding: 4px;
+  margin-bottom: 28px;
+  gap: 2px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: calc(var(--auth-radius-sm) - 2px);
+  font-family: var(--auth-font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--auth-transition),
+              color var(--auth-transition),
+              box-shadow var(--auth-transition);
+  background: transparent;
+  color: var(--auth-text-muted);
+  line-height: 1;
+}
+
+.login-tab:focus-visible {
+  outline: 3px solid var(--auth-gold);
+  outline-offset: 2px;
+}
+
+/* Active tab: white card with subtle shadow */
+.login-tab--active {
+  background: var(--auth-surface);
+  color: var(--auth-navy);
+  box-shadow: var(--auth-shadow-sm);
+}
+
+/* ── Password label row (label left, forgot-password link right) ── */
+.login-pass-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* Override the default bottom margin on the label when inside this row */
+.login-pass-header .auth-field__label {
+  margin-bottom: 0;
+}
+
+/* ── Demo hint text ── */
+.login-demo-hint {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--auth-text-faint);
+  margin-top: 14px;
+  line-height: 1.5;
+  background: var(--auth-bg);
+  border-radius: var(--auth-radius-sm);
+  padding: 8px 12px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SIGNUP-SPECIFIC STYLES
+   New classes added for the refined SignUp wizard.
+   Appended here so Auth.css stays as the single import.
+═══════════════════════════════════════════════════════ */
+
+/* ── Role toggle on Step 1 (replaces full-page role cards) ──
+   Compact two-button group. Active = blue fill with white text.
+   Much lighter than the old card-based approach.
+─────────────────────────────────────────────────────────── */
+.signup-role-toggle {
+  display: flex;
+  background: var(--auth-bg);
+  border-radius: var(--auth-radius-sm);
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 2px;
+}
+
+.signup-role-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: calc(var(--auth-radius-sm) - 2px);
+  font-family: var(--auth-font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--auth-transition),
+              color var(--auth-transition),
+              box-shadow var(--auth-transition);
+  background: transparent;
+  color: var(--auth-text-muted);
+  line-height: 1;
+}
+
+.signup-role-btn:focus-visible {
+  outline: 3px solid var(--auth-gold);
+  outline-offset: 2px;
+}
+
+/* Active role = solid blue, white text */
+.signup-role-btn--active {
+  background: var(--auth-blue);
+  color: #fff;
+  box-shadow: var(--auth-shadow-sm);
+}
+
+/* ── Left-panel compact step dots (steps 2–3) ──
+   Replaces the full features list on later steps.
+   Three dots: done (green), active (gold pill), upcoming (grey).
+─────────────────────────────────────────────────────────── */
+.signup-left__step-indicator {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0 20px;
+}
+
+.signup-left__step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  flex-shrink: 0;
+  transition: background var(--auth-transition), width var(--auth-transition), border-radius var(--auth-transition);
+}
+
+.signup-left__step-dot.step-done {
+  background: var(--auth-green);
+}
+
+/* Active dot = elongated gold pill */
+.signup-left__step-dot.step-active {
+  background: var(--auth-gold);
+  width: 22px;
+  border-radius: 4px;
+}
+
+/* ── Progress bar label refinements for SignUp ──
+   The existing auth-progress styles handle the bars.
+   These just ensure the labels don't overflow on narrow panels.
+─────────────────────────────────────────────────────────── */
+.auth-progress__label {
+  font-size: 0.67rem;   /* slightly tighter than before */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Field spacing refinement ──
+   Step forms on SignUp have 4 fields max. Tighten the
+   gap between consecutive fields slightly vs the default.
+─────────────────────────────────────────────────────────── */
+.auth-form-panel .auth-field {
+  margin-bottom: 16px;   /* was 18px in base */
+}
+
+.auth-form-panel .auth-field:last-of-type {
+  margin-bottom: 0;
+}
+
+/* ── Responsive: SignUp role toggle on small phones ── */
+@media (max-width: 420px) {
+  .signup-role-toggle {
+    gap: 4px;
+  }
+
+  .signup-role-btn {
+    font-size: 0.8rem;
+    padding: 9px 10px;
+  }
+}
