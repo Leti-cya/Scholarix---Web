@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import "./StudentDashboard.css";
 import {
   getProfile,
+  updateProfile,
   getMatches,
   getStudentApplications,
   applyScholarship
@@ -51,13 +52,22 @@ function notificationIcon(type) {
  * ProfileCard — student's photo/initials, name, course, and
  * a completion progress bar that nudges them to fill their profile.
  */
-function ProfileCard({ student }) {
+function ProfileCard({ student, onEdit }) {
   const initials = student.firstName ? `${student.firstName[0]}${student.lastName ? student.lastName[0] : ""}` : "S";
 
   return (
     <div className="sd-profile-card">
-      <div className="sd-avatar" aria-label={`Avatar for ${student.firstName}`}>
-        {initials}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: "12px" }}>
+        <div className="sd-avatar" aria-label={`Avatar for ${student.firstName}`}>
+          {initials}
+        </div>
+        <button
+          className="sd-btn-outline"
+          style={{ padding: "6px 12px", fontSize: "12px", border: "1px solid #F5C842", color: "#F5C842", cursor: "pointer", background: "transparent" }}
+          onClick={onEdit}
+        >
+          ✏️ Edit Profile
+        </button>
       </div>
 
       <div className="sd-profile-info">
@@ -269,6 +279,7 @@ export default function StudentDashboard() {
         firstName: pData.first_name || "Student",
         lastName: pData.last_name || "",
         email: pData.email || "",
+        phone: pData.phone || "",
         level: pData.level,
         field: pData.field,
         institution: pData.institution,
@@ -300,6 +311,53 @@ export default function StudentDashboard() {
   const [applyModal, setApplyModal] = useState({ isOpen: false, scholarshipId: null, scholarshipName: "" });
   const [essayText, setEssayText] = useState("");
   const [submittingApp, setSubmittingApp] = useState(false);
+
+  const [editProfileModal, setEditProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    country: "",
+    level: "",
+    field: "",
+    institution: "",
+    gpa: ""
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const handleOpenEditProfile = () => {
+    setProfileForm({
+      firstName: student.firstName || "",
+      lastName: student.lastName || "",
+      phone: student.phone || "",
+      country: student.country || "",
+      level: student.level || "",
+      field: student.field || "",
+      institution: student.institution || "",
+      gpa: student.gpa || ""
+    });
+    setEditProfileModal(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!profileForm.firstName.trim() || !profileForm.lastName.trim()) {
+      toast.error("First and last name are required.");
+      return;
+    }
+
+    try {
+      setSavingProfile(true);
+      await updateProfile(profileForm);
+      toast.success("Profile updated successfully!");
+      setEditProfileModal(false);
+      fetchDashboardData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update profile.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const handleOpenApplyModal = (scholarshipId, scholarshipName) => {
     setApplyModal({ isOpen: true, scholarshipId, scholarshipName });
@@ -399,7 +457,7 @@ export default function StudentDashboard() {
             <h2 className="sd-section-heading" id="profile-heading">
               My Profile
             </h2>
-            <ProfileCard student={student} />
+            <ProfileCard student={student} onEdit={handleOpenEditProfile} />
           </section>
 
           {/* UPCOMING DEADLINES */}
@@ -618,12 +676,166 @@ export default function StudentDashboard() {
                     background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
                     border: "none",
                     color: "white",
-                    fontWeight: "600",
-                    cursor: "pointer",
                     opacity: submittingApp ? 0.7 : 1
                   }}
                 >
                   {submittingApp ? "Submitting..." : "Submit Application →"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ── EDIT PROFILE MODAL ─────────────────────────────────────── */}
+      {editProfileModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(15, 23, 42, 0.85)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px"
+        }}>
+          <div style={{
+            background: "#1E293B",
+            border: "1px solid #334155",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "100%",
+            maxWidth: "600px",
+            color: "white",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#F5C842" }}>
+                ✏️ Edit Student Profile
+              </h3>
+              <button
+                onClick={() => setEditProfileModal(false)}
+                style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ color: "#94A3B8", fontSize: "14px", marginBottom: "20px" }}>
+              Update your personal and academic details to improve your AI scholarship match recommendations.
+            </p>
+
+            <form onSubmit={handleSaveProfile}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>First Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.firstName}
+                    onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Last Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.lastName}
+                    onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Phone Number</label>
+                  <input
+                    type="text"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    placeholder="+1 555 0192"
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Country</label>
+                  <input
+                    type="text"
+                    value={profileForm.country}
+                    onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
+                    placeholder="e.g. United Kingdom, Nepal"
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Academic Level</label>
+                  <input
+                    type="text"
+                    value={profileForm.level}
+                    onChange={(e) => setProfileForm({ ...profileForm, level: e.target.value })}
+                    placeholder="e.g. Undergraduate (Bachelor's)"
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Field of Study</label>
+                  <input
+                    type="text"
+                    value={profileForm.field}
+                    onChange={(e) => setProfileForm({ ...profileForm, field: e.target.value })}
+                    placeholder="e.g. Computer Science & IT"
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "24px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Institution / University</label>
+                  <input
+                    type="text"
+                    value={profileForm.institution}
+                    onChange={(e) => setProfileForm({ ...profileForm, institution: e.target.value })}
+                    placeholder="e.g. University of Oxford"
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>GPA Score</label>
+                  <input
+                    type="text"
+                    value={profileForm.gpa}
+                    onChange={(e) => setProfileForm({ ...profileForm, gpa: e.target.value })}
+                    placeholder="e.g. 3.8 / 4.0"
+                    style={{ width: "100%", background: "#0F172A", border: "1px solid #334155", borderRadius: "8px", padding: "10px", color: "white", fontSize: "14px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditProfileModal(false)}
+                  style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", border: "1px solid #475569", color: "#CBD5E1", fontWeight: "600", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: "#F5C842", border: "none", color: "#0F172A", fontWeight: "700", cursor: "pointer", opacity: savingProfile ? 0.7 : 1 }}
+                >
+                  {savingProfile ? "Saving Changes..." : "Save Profile →"}
                 </button>
               </div>
             </form>

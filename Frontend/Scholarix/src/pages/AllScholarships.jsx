@@ -133,7 +133,7 @@ export default function AllScholarships() {
     <div style={{ background: "#0F172A", minHeight: "100vh", color: "#F8FAFC", paddingBottom: "60px" }}>
       {/* Top Navbar Header */}
       <header style={{ background: "#1E293B", borderBottom: "1px solid #334155", padding: "16px 24px" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <button
               onClick={() => navigate("/dashboard")}
@@ -151,7 +151,7 @@ export default function AllScholarships() {
         </div>
       </header>
 
-      <main style={{ maxWidth: "1200px", margin: "32px auto", padding: "0 24px" }}>
+      <main style={{ maxWidth: "1400px", margin: "32px auto", padding: "0 24px" }}>
         {/* Search & Filter Bar */}
         <div style={{ background: "#1E293B", border: "1px solid #334155", borderRadius: "16px", padding: "24px", marginBottom: "32px" }}>
           <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>

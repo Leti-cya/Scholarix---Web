@@ -30,6 +30,10 @@ export const getProfile = () => {
     return Api.get("/api/auth/profile");
 };
 
+export const updateProfile = (data) => {
+    return Api.put("/api/auth/profile", data);
+};
+
 export const getMatches = () => {
     return Api.get("/api/scholarships/matches");
 };

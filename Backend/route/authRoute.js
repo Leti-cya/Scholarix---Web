@@ -6,6 +6,7 @@ const {
     login,
     checkEmail,
     getProfile,
+    updateProfile,
     resetPassword
 } = require("../controller/authController")
 
@@ -15,6 +16,7 @@ router.post("/register", register)
 router.post("/login", login)
 router.get("/check-email", checkEmail)
 router.get("/profile", verifyToken, getProfile)
+router.put("/profile", verifyToken, updateProfile)
 router.post("/reset-password", resetPassword)
 
 module.exports = router

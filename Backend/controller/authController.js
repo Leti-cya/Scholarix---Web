@@ -4,7 +4,8 @@ const JWT = require("jsonwebtoken")
 const {
     findUserByEmail,
     createUser,
-    updateUserPassword
+    updateUserPassword,
+    updateUserProfile
 } = require("../model/userModel")
 
 const register = async (req, res) => {
@@ -138,6 +139,27 @@ const getProfile = async (req, res) => {
     }
 }
 
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+        const updatedUser = await updateUserProfile(userId, role, req.body);
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User profile not found." });
+        }
+        const { password, ...safeUser } = updatedUser;
+        res.status(200).json({
+            message: "Profile updated successfully",
+            user: safeUser
+        });
+    } catch (e) {
+        console.error("UPDATE PROFILE ERROR:", e);
+        res.status(500).json({
+            message: e.message
+        });
+    }
+}
+
 const resetPassword = async (req, res) => {
     try {
         const { email, newPassword } = req.body;
@@ -182,5 +204,6 @@ module.exports = {
     login,
     checkEmail,
     getProfile,
+    updateProfile,
     resetPassword
 }

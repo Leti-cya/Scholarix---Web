@@ -40,9 +40,15 @@ export default function ProviderDashboard() {
 
       // 1. Fetch Provider Profile details
       const profileRes = await Api.get("/api/auth/profile");
+      const pData = profileRes.data;
       setProvider({
-        orgName: profileRes.data.org_name || "Organisation",
-        contactName: profileRes.data.contact_name || "Representative"
+        orgName: pData.org_name || "Organisation",
+        orgType: pData.org_type || "",
+        website: pData.website || "",
+        contactName: pData.contact_name || "Representative",
+        contactTitle: pData.contact_title || "",
+        regNumber: pData.reg_number || "",
+        description: pData.description || ""
       });
 
       // Automatically prefill providerName in the form
@@ -128,6 +134,51 @@ export default function ProviderDashboard() {
     requirements: ""
   });
   const [updating, setUpdating] = useState(false);
+
+  const [editOrgProfileModal, setEditOrgProfileModal] = useState(false);
+  const [orgProfileForm, setOrgProfileForm] = useState({
+    orgName: "",
+    orgType: "",
+    website: "",
+    contactName: "",
+    contactTitle: "",
+    regNumber: "",
+    description: ""
+  });
+  const [savingOrgProfile, setSavingOrgProfile] = useState(false);
+
+  const handleOpenEditOrgProfile = () => {
+    setOrgProfileForm({
+      orgName: provider.orgName || "",
+      orgType: provider.orgType || "",
+      website: provider.website || "",
+      contactName: provider.contactName || "",
+      contactTitle: provider.contactTitle || "",
+      regNumber: provider.regNumber || "",
+      description: provider.description || ""
+    });
+    setEditOrgProfileModal(true);
+  };
+
+  const handleSaveOrgProfile = async (e) => {
+    e.preventDefault();
+    if (!orgProfileForm.orgName.trim()) {
+      toast.error("Organization name is required.");
+      return;
+    }
+
+    try {
+      setSavingOrgProfile(true);
+      await Api.put("/api/auth/profile", orgProfileForm);
+      toast.success("Organization profile updated successfully!");
+      setEditOrgProfileModal(false);
+      fetchProviderData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update organization profile.");
+    } finally {
+      setSavingOrgProfile(false);
+    }
+  };
 
   const handleOpenEditModal = (s) => {
     const formattedDeadline = s.deadline ? new Date(s.deadline).toISOString().split('T')[0] : "";
@@ -272,9 +323,14 @@ export default function ProviderDashboard() {
           <h1 className="pd-welcome-heading">{provider.orgName}</h1>
           <p className="pd-welcome-sub">Welcome back, {provider.contactName} · Manage your listings and applications</p>
         </div>
-        <button className="pd-btn pd-btn-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={handleLogout}>
-          Sign Out
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="pd-btn pd-btn-outline" style={{ borderColor: '#F5C842', color: '#F5C842' }} onClick={handleOpenEditOrgProfile}>
+            ✏️ Edit Org Profile
+          </button>
+          <button className="pd-btn pd-btn-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={handleLogout}>
+            Sign Out
+          </button>
+        </div>
       </header>
 
       {/* ── STATISTICS ROW ────────────────────────────────────────────── */}
@@ -778,6 +834,149 @@ export default function ProviderDashboard() {
                   }}
                 >
                   {updating ? "Saving Changes..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {editOrgProfileModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(15, 23, 42, 0.85)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px"
+        }}>
+          <div style={{
+            background: "#1E293B",
+            border: "1px solid #334155",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "100%",
+            maxWidth: "600px",
+            color: "white",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#F5C842" }}>
+                ✏️ Edit Organization Profile
+              </h3>
+              <button
+                onClick={() => setEditOrgProfileModal(false)}
+                style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ color: "#94A3B8", fontSize: "14px", marginBottom: "20px" }}>
+              Update your organization and primary contact information.
+            </p>
+
+            <form onSubmit={handleSaveOrgProfile}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Organization Name</label>
+                  <input
+                    type="text"
+                    className="pd-input"
+                    value={orgProfileForm.orgName}
+                    onChange={(e) => setOrgProfileForm({ ...orgProfileForm, orgName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Organization Type</label>
+                  <input
+                    type="text"
+                    className="pd-input"
+                    value={orgProfileForm.orgType}
+                    onChange={(e) => setOrgProfileForm({ ...orgProfileForm, orgType: e.target.value })}
+                    placeholder="e.g. Non-profit Foundation"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Website URL</label>
+                  <input
+                    type="text"
+                    className="pd-input"
+                    value={orgProfileForm.website}
+                    onChange={(e) => setOrgProfileForm({ ...orgProfileForm, website: e.target.value })}
+                    placeholder="https://example.org"
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Registration No.</label>
+                  <input
+                    type="text"
+                    className="pd-input"
+                    value={orgProfileForm.regNumber}
+                    onChange={(e) => setOrgProfileForm({ ...orgProfileForm, regNumber: e.target.value })}
+                    placeholder="e.g. REG-98124"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Contact Person Name</label>
+                  <input
+                    type="text"
+                    className="pd-input"
+                    value={orgProfileForm.contactName}
+                    onChange={(e) => setOrgProfileForm({ ...orgProfileForm, contactName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>Contact Job Title</label>
+                  <input
+                    type="text"
+                    className="pd-input"
+                    value={orgProfileForm.contactTitle}
+                    onChange={(e) => setOrgProfileForm({ ...orgProfileForm, contactTitle: e.target.value })}
+                    placeholder="e.g. Head of Grants"
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: "24px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "6px" }}>About Organization</label>
+                <textarea
+                  rows={4}
+                  className="pd-input"
+                  value={orgProfileForm.description}
+                  onChange={(e) => setOrgProfileForm({ ...orgProfileForm, description: e.target.value })}
+                  placeholder="Describe your organization's mission and funding objectives..."
+                  style={{ resize: "vertical" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditOrgProfileModal(false)}
+                  style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", border: "1px solid #475569", color: "#CBD5E1", fontWeight: "600", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingOrgProfile}
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: "#F5C842", border: "none", color: "#0F172A", fontWeight: "700", cursor: "pointer", opacity: savingOrgProfile ? 0.7 : 1 }}
+                >
+                  {savingOrgProfile ? "Saving Changes..." : "Save Org Profile →"}
                 </button>
               </div>
             </form>

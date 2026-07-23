@@ -100,7 +100,7 @@ export default function ScholarshipDetails() {
     <div style={{ background: "#0F172A", minHeight: "100vh", color: "#F8FAFC", paddingBottom: "60px" }}>
       {/* Header Bar */}
       <header style={{ background: "#1E293B", borderBottom: "1px solid #334155", padding: "16px 24px" }}>
-        <div style={{ maxWidth: "1000px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ maxWidth: "1300px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <button
             onClick={() => navigate(-1)}
             style={{ background: "none", border: "none", color: "#F5C842", fontSize: "15px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
@@ -112,7 +112,7 @@ export default function ScholarshipDetails() {
       </header>
 
       {/* Main Container */}
-      <main style={{ maxWidth: "1000px", margin: "32px auto", padding: "0 24px" }}>
+      <main style={{ maxWidth: "1300px", margin: "32px auto", padding: "0 24px" }}>
         {/* Banner Card */}
         <div style={{ background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)", border: "1px solid #334155", borderRadius: "16px", padding: "32px", marginBottom: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
