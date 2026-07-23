@@ -12,6 +12,7 @@ import ScholarshipDetails from './pages/ScholarshipDetails'
 import AllScholarships from './pages/AllScholarships'
 import ProviderProfile from './pages/ProviderProfile'
 import StudentApplications from './pages/StudentApplications'
+import ProviderApplications from './pages/ProviderApplications'
 import ProtectedRoute from './service/ProtectedRoute'
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
           {/* Protected Provider Routes */}
           <Route element={<ProtectedRoute allowedRoles={['provider']} />}>
             <Route path = "/provider/dashboard" element = {<ProviderDashboard />} />
+            <Route path = "/provider/applications" element = {<ProviderApplications />} />
           </Route>
 
           {/* Fallback 404 Route */}

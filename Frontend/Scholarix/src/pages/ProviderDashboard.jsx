@@ -19,6 +19,8 @@ export default function ProviderDashboard() {
   const [scholarships, setScholarships] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [appFilter, setAppFilter] = useState("all");
+  const [applicantModal, setApplicantModal] = useState({ isOpen: false, applicant: null });
 
   // Form State for creating a scholarship
   const [newScholarship, setNewScholarship] = useState({
@@ -251,6 +253,16 @@ export default function ProviderDashboard() {
       // Reload applications list
       const appsRes = await Api.get("/api/applications/provider");
       setApplications(appsRes.data);
+
+      setApplicantModal(prev => {
+        if (prev.isOpen && prev.applicant && prev.applicant.application_id === applicationId) {
+          return {
+            ...prev,
+            applicant: { ...prev.applicant, status }
+          };
+        }
+        return prev;
+      });
     } catch (error) {
       toast.error("Failed to update application status.");
     }
@@ -265,8 +277,13 @@ export default function ProviderDashboard() {
   // Metrics
   const activeCount = scholarships.length;
   const totalAppsCount = applications.length;
+  const submittedCount = applications.filter(a => a.status === "submitted").length;
+  const underReviewCount = applications.filter(a => a.status === "under_review").length;
   const approvedCount = applications.filter(a => a.status === "approved").length;
-  const reviewPendingCount = applications.filter(a => a.status === "submitted").length;
+  const pendingReviewsCount = submittedCount + underReviewCount;
+
+  // Maximum 5 recent applications for dashboard overview
+  const recentApps = applications.slice(0, 5);
 
   const LEVELS = [
     "Select level",
@@ -323,7 +340,14 @@ export default function ProviderDashboard() {
           <h1 className="pd-welcome-heading">{provider.orgName}</h1>
           <p className="pd-welcome-sub">Welcome back, {provider.contactName} · Manage your listings and applications</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            className="pd-btn pd-btn-outline"
+            style={{ borderColor: '#38BDF8', color: '#38BDF8' }}
+            onClick={() => navigate('/provider/applications')}
+          >
+            Manage Applications 📋
+          </button>
           <button className="pd-btn pd-btn-outline" style={{ borderColor: '#F5C842', color: '#F5C842' }} onClick={handleOpenEditOrgProfile}>
             ✏️ Edit Org Profile
           </button>
@@ -351,40 +375,53 @@ export default function ProviderDashboard() {
         </div>
         <div className="pd-stat-card">
           <div className="pd-stat-header">
-            <span className="pd-stat-label">Awards Approved</span>
-            <span className="pd-stat-icon">✅</span>
+            <span className="pd-stat-label">Pending Reviews</span>
+            <span className="pd-stat-icon">⏳</span>
           </div>
-          <div className="pd-stat-value">{approvedCount}</div>
+          <div className="pd-stat-value" style={{ color: "#F59E0B" }}>{pendingReviewsCount}</div>
         </div>
         <div className="pd-stat-card">
           <div className="pd-stat-header">
-            <span className="pd-stat-label">Review Pending</span>
-            <span className="pd-stat-icon">⏳</span>
+            <span className="pd-stat-label">Awards Approved</span>
+            <span className="pd-stat-icon">✅</span>
           </div>
-          <div className="pd-stat-value">{reviewPendingCount}</div>
+          <div className="pd-stat-value" style={{ color: "#10B981" }}>{approvedCount}</div>
         </div>
       </div>
 
       {/* ── MAIN DASHBOARD GRID ────────────────────────────────────────────── */}
       <div className="pd-grid">
-        {/* LEFT COLUMN: ACTIVE LISTINGS & APPLICATIONS */}
+        {/* LEFT COLUMN: RECENT APPLICATIONS & ACTIVE LISTINGS */}
         <div>
-          {/* APPLICATIONS REVIEW SECTION */}
+          {/* RECENT APPLICATIONS SECTION */}
           <section className="pd-section">
-            <div className="pd-section-header">
-              <h2 className="pd-section-heading">Applications Received ({totalAppsCount})</h2>
+            <div className="pd-section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <h2 className="pd-section-heading" style={{ margin: 0 }}>Recent Applications</h2>
+                <span style={{ fontSize: "12px", background: "rgba(245, 158, 11, 0.15)", color: "#F59E0B", padding: "4px 10px", borderRadius: "12px", fontWeight: "600" }}>
+                  Pending Reviews: {pendingReviewsCount}
+                </span>
+              </div>
+              <button
+                className="pd-btn pd-btn-outline"
+                style={{ fontSize: "13px", padding: "6px 14px", borderColor: "#F5C842", color: "#F5C842" }}
+                onClick={() => navigate("/provider/applications")}
+              >
+                View All Applications →
+              </button>
             </div>
-            {applications.length > 0 ? (
+
+            {recentApps.length > 0 ? (
               <div>
-                {applications.map((app) => (
-                  <div key={app.application_id} className="pd-app-card">
-                    <div className="pd-app-student-info">
+                {recentApps.map((app) => (
+                  <div key={app.application_id} className="pd-applicant-card" style={{ marginBottom: "14px" }}>
+                    <div className="pd-app-student-info" style={{ marginBottom: "10px", borderBottom: "1px solid var(--pd-border)", paddingBottom: "8px" }}>
                       <div>
-                        <strong style={{ fontSize: "16px", color: "white" }}>
+                        <strong style={{ fontSize: "15px", color: "white" }}>
                           {app.first_name} {app.last_name}
                         </strong>
-                        <div style={{ fontSize: "13px", color: "var(--pd-text-muted)", marginTop: "4px" }}>
-                          {app.student_email} · 📍 {app.student_country}
+                        <div style={{ fontSize: "12px", color: "var(--pd-text-muted)", marginTop: "2px" }}>
+                          Applied for: <strong>{app.scholarship_name}</strong> ({app.scholarship_amount || "N/A"})
                         </div>
                       </div>
                       <span className={`status-badge ${app.status}`}>
@@ -392,50 +429,43 @@ export default function ProviderDashboard() {
                       </span>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "16px", fontSize: "13px", color: "#94A3B8" }}>
-                      <div><strong>GPA Score:</strong> {app.student_gpa || "N/A"}</div>
-                      <div><strong>Study Level:</strong> {app.student_level || "N/A"}</div>
-                      <div><strong>Field of Study:</strong> {app.student_field || "N/A"}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "8px", marginBottom: "10px", fontSize: "12px", color: "#94A3B8" }}>
+                      <div><strong>Institution:</strong> {app.student_institution || "N/A"}</div>
+                      <div><strong>Level:</strong> {app.student_level || "N/A"}</div>
+                      <div><strong>GPA:</strong> {app.student_gpa || "N/A"}</div>
+                      <div><strong>Submitted:</strong> {new Date(app.submitted_at).toLocaleDateString()}</div>
                     </div>
 
-                    <div style={{ fontSize: "13px", color: "var(--pd-text-muted)", marginBottom: "4px" }}>
-                      <strong>Applied for:</strong> {app.scholarship_name} ({app.scholarship_amount})
-                    </div>
-
-                    <div className="pd-app-essay">
-                      <strong>Applicant Essay Statement:</strong>
-                      <p style={{ marginTop: "6px", whiteSpace: "pre-line" }}>{app.essay || "No statement provided."}</p>
-                    </div>
-
-                    <div className="pd-app-actions">
-                      {app.status === "submitted" && (
-                        <button className="pd-btn pd-btn-outline" onClick={() => handleUpdateStatus(app.application_id, "under_review")}>
-                          Mark Under Review
-                        </button>
-                      )}
-                      {app.status === "under_review" && (
-                        <button className="pd-btn pd-btn-outline" style={{ borderColor: "#A855F7", color: "#A855F7" }} onClick={() => handleUpdateStatus(app.application_id, "shortlisted")}>
-                          Shortlist
-                        </button>
-                      )}
-                      {app.status !== "approved" && app.status !== "rejected" && (
-                        <>
-                          <button className="pd-btn pd-btn-danger" onClick={() => handleUpdateStatus(app.application_id, "rejected")}>
-                            Reject
-                          </button>
-                          <button className="pd-btn pd-btn-primary" style={{ background: "#10B981" }} onClick={() => handleUpdateStatus(app.application_id, "approved")}>
-                            Approve Award
-                          </button>
-                        </>
-                      )}
-                      {(app.status === "approved" || app.status === "rejected") && (
-                        <span style={{ fontSize: "13px", color: "var(--pd-text-muted)" }}>
-                          Decision made on {new Date(app.submitted_at).toLocaleDateString()}
-                        </span>
-                      )}
+                    <div className="pd-app-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <button
+                        className="pd-btn pd-btn-outline"
+                        style={{ fontSize: "12px", padding: "5px 10px", borderColor: "#38BDF8", color: "#38BDF8" }}
+                        onClick={() => setApplicantModal({ isOpen: true, applicant: app })}
+                      >
+                        View Details 👁️
+                      </button>
+                      <button
+                        className="pd-btn pd-btn-outline"
+                        style={{ fontSize: "12px", padding: "5px 10px" }}
+                        onClick={() => navigate("/provider/applications")}
+                      >
+                        Review on Full Page →
+                      </button>
                     </div>
                   </div>
                 ))}
+
+                {applications.length > 5 && (
+                  <div style={{ textAlign: "center", marginTop: "16px" }}>
+                    <button
+                      className="pd-btn pd-btn-outline"
+                      style={{ width: "100%", padding: "10px", borderColor: "#F5C842", color: "#F5C842", fontWeight: "600" }}
+                      onClick={() => navigate("/provider/applications")}
+                    >
+                      View All {applications.length} Applications →
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <p style={{ color: "var(--pd-text-muted)", fontSize: "14px" }}>No applications received yet for your listings.</p>
@@ -980,6 +1010,156 @@ export default function ProviderDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── APPLICANT DETAILS MODAL ────────────────────────────────────────── */}
+      {applicantModal.isOpen && applicantModal.applicant && (
+        <div className="pd-modal-overlay" onClick={() => setApplicantModal({ isOpen: false, applicant: null })}>
+          <div className="pd-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="pd-modal-header">
+              <div>
+                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "white", margin: 0 }}>
+                  👤 {applicantModal.applicant.first_name} {applicantModal.applicant.last_name}
+                </h3>
+                <span style={{ fontSize: "13px", color: "var(--pd-text-muted)", marginTop: "2px", display: "block" }}>
+                  Applicant for {applicantModal.applicant.scholarship_name}
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span className={`status-badge ${applicantModal.applicant.status}`}>
+                  {applicantModal.applicant.status.replace("_", " ")}
+                </span>
+                <button
+                  onClick={() => setApplicantModal({ isOpen: false, applicant: null })}
+                  style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "20px", cursor: "pointer" }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="pd-modal-body">
+              {/* Student Profile Info */}
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#F5C842", margin: "0 0 10px 0" }}>
+                  Student Profile Information
+                </h4>
+                <div className="pd-detail-grid">
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Full Name</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.first_name} {applicantModal.applicant.last_name}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Email Address</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_email}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Phone Number</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_phone || "Not provided"}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Country / Nationality</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_country || "Not specified"}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Institution</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_institution || "Not specified"}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Study Level</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_level || "Not specified"}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Field of Study</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_field || "Not specified"}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">GPA Score</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.student_gpa || "Not specified"}</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Scholarship Applied</span>
+                    <span className="pd-detail-val">{applicantModal.applicant.scholarship_name} ({applicantModal.applicant.scholarship_amount})</span>
+                  </div>
+                  <div className="pd-detail-item">
+                    <span className="pd-detail-label">Submission Date</span>
+                    <span className="pd-detail-val">{new Date(applicantModal.applicant.submitted_at).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Essay Statement */}
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#F5C842", margin: "0 0 8px 0" }}>
+                  Application Essay Statement
+                </h4>
+                <div className="pd-app-essay" style={{ margin: 0, maxHeight: "200px", overflowY: "auto" }}>
+                  <p style={{ margin: 0, whiteSpace: "pre-line", lineHeight: "1.6", color: "#CBD5E1" }}>
+                    {applicantModal.applicant.essay || "No essay statement provided."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Application Status Action Controls */}
+              <div style={{ background: "#0F172A", padding: "16px", borderRadius: "10px", border: "1px solid var(--pd-border)" }}>
+                <strong style={{ display: "block", marginBottom: "10px", fontSize: "13px", color: "var(--pd-text-muted)" }}>
+                  Change Application Status:
+                </strong>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <button
+                    className="pd-btn pd-btn-outline"
+                    style={{ fontSize: "12px", padding: "6px 12px" }}
+                    disabled={applicantModal.applicant.status === "submitted"}
+                    onClick={() => handleUpdateStatus(applicantModal.applicant.application_id, "submitted")}
+                  >
+                    Submitted
+                  </button>
+                  <button
+                    className="pd-btn pd-btn-outline"
+                    style={{ fontSize: "12px", padding: "6px 12px", borderColor: "#F59E0B", color: "#F59E0B" }}
+                    disabled={applicantModal.applicant.status === "under_review"}
+                    onClick={() => handleUpdateStatus(applicantModal.applicant.application_id, "under_review")}
+                  >
+                    Under Review
+                  </button>
+                  <button
+                    className="pd-btn pd-btn-outline"
+                    style={{ fontSize: "12px", padding: "6px 12px", borderColor: "#A855F7", color: "#A855F7" }}
+                    disabled={applicantModal.applicant.status === "shortlisted"}
+                    onClick={() => handleUpdateStatus(applicantModal.applicant.application_id, "shortlisted")}
+                  >
+                    Shortlist
+                  </button>
+                  <button
+                    className="pd-btn pd-btn-primary"
+                    style={{ fontSize: "12px", padding: "6px 12px", background: "#10B981" }}
+                    disabled={applicantModal.applicant.status === "approved"}
+                    onClick={() => handleUpdateStatus(applicantModal.applicant.application_id, "approved")}
+                  >
+                    Approve Award
+                  </button>
+                  <button
+                    className="pd-btn pd-btn-danger"
+                    style={{ fontSize: "12px", padding: "6px 12px" }}
+                    disabled={applicantModal.applicant.status === "rejected"}
+                    onClick={() => handleUpdateStatus(applicantModal.applicant.application_id, "rejected")}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: "16px 24px", borderTop: "1px solid var(--pd-border)", display: "flex", justifyContent: "flex-end" }}>
+              <button
+                className="pd-btn pd-btn-outline"
+                onClick={() => setApplicantModal({ isOpen: false, applicant: null })}
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         </div>
       )}

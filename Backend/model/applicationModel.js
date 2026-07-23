@@ -27,7 +27,9 @@ const getApplicationsForProvider = async (providerId) => {
             u.gpa as student_gpa,
             u.level as student_level,
             u.field as student_field,
-            u.country as student_country
+            u.institution as student_institution,
+            u.country as student_country,
+            u.phone as student_phone
          FROM applications a
          JOIN scholarships s ON a.scholarship_id = s.id
          JOIN users u ON a.student_id = u.id
