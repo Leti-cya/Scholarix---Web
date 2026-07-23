@@ -301,20 +301,7 @@ function Step1Account({ role, onRoleChange, data, onChange, onNext }) {
         </button>
       </div>
 
-      <div className="auth-social-row">
-        <button type="button" className="auth-social-btn" aria-label="Continue with Google">
-          <span className="auth-social-btn__icon"><GoogleIcon /></span>
-          Google
-        </button>
-        <button type="button" className="auth-social-btn" aria-label="Continue with Apple">
-          <span className="auth-social-btn__icon" aria-hidden="true">🍎</span>
-          Apple
-        </button>
-      </div>
 
-      <div className="auth-divider" aria-hidden="true">
-        <span>or use email</span>
-      </div>
 
       <div className="auth-field">
         <label className="auth-field__label" htmlFor="s1-email">Email address</label>

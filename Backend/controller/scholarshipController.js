@@ -2,6 +2,8 @@ const {
     createScholarship,
     getAllScholarships,
     getScholarshipsByProvider,
+    getScholarshipById,
+    updateScholarship,
     deleteScholarship,
     getMatchingScholarships
 } = require("../model/scholarshipModel");
@@ -43,6 +45,24 @@ const listScholarships = async (req, res) => {
         res.status(200).json(scholarships);
     } catch (e) {
         console.error("LIST SCHOLARSHIPS ERROR:", e);
+        res.status(500).json({
+            message: e.message
+        });
+    }
+};
+
+const getScholarshipDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const scholarship = await getScholarshipById(id);
+        if (!scholarship) {
+            return res.status(404).json({
+                message: "Scholarship not found."
+            });
+        }
+        res.status(200).json(scholarship);
+    } catch (e) {
+        console.error("GET SCHOLARSHIP DETAILS ERROR:", e);
         res.status(500).json({
             message: e.message
         });
@@ -115,10 +135,39 @@ const listMatchingScholarships = async (req, res) => {
     }
 };
 
+const editScholarship = async (req, res) => {
+    try {
+        if (req.user.role !== "provider") {
+            return res.status(403).json({
+                message: "Access denied. Provider role required."
+            });
+        }
+        const { id } = req.params;
+        const data = req.body;
+        const updated = await updateScholarship(id, req.user.id, data);
+        if (!updated) {
+            return res.status(404).json({
+                message: "Scholarship not found or unauthorized to edit."
+            });
+        }
+        res.status(200).json({
+            message: "Scholarship updated successfully",
+            scholarship: updated
+        });
+    } catch (e) {
+        console.error("EDIT SCHOLARSHIP ERROR:", e);
+        res.status(500).json({
+            message: e.message
+        });
+    }
+};
+
 module.exports = {
     addScholarship,
     listScholarships,
+    getScholarshipDetails,
     listProviderScholarships,
+    editScholarship,
     removeScholarship,
     listMatchingScholarships
 };

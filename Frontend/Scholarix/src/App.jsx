@@ -8,6 +8,8 @@ import Signup from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
 import StudentDashboard from './pages/StudentDashboard'
 import ProviderDashboard from './pages/ProviderDashboard'
+import ScholarshipDetails from './pages/ScholarshipDetails'
+import AllScholarships from './pages/AllScholarships'
 import ProtectedRoute from './service/ProtectedRoute'
 
 function App() {
@@ -25,6 +27,8 @@ function App() {
           {/* Protected Student Routes */}
           <Route element={<ProtectedRoute allowedRoles={['student']} />}>
             <Route path = "/dashboard" element = {<StudentDashboard />} />
+            <Route path = "/scholarships" element = {<AllScholarships />} />
+            <Route path = "/scholarships/:id" element = {<ScholarshipDetails />} />
           </Route>
 
           {/* Protected Provider Routes */}

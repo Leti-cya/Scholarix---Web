@@ -42,4 +42,16 @@ export const applyScholarship = (data) => {
     return Api.post("/api/applications", data);
 };
 
+export const resetPassword = (data) => {
+    return Api.post("/api/auth/reset-password", data);
+};
+
+export const getScholarshipById = (id) => {
+    return Api.get(`/api/scholarships/${id}`);
+};
+
+export const updateScholarship = (id, data) => {
+    return Api.put(`/api/scholarships/${id}`, data);
+};
+
 export default Api;

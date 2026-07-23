@@ -112,19 +112,83 @@ export default function ProviderDashboard() {
     }
   };
 
-  const handleDeleteScholarship = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this scholarship listing? All associated applications will also be deleted.")) {
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, scholarshipId: null });
+  const [deleting, setDeleting] = useState(false);
+
+  const [editModal, setEditModal] = useState({ isOpen: false, scholarshipId: null });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    providerName: "",
+    description: "",
+    amount: "",
+    deadline: "",
+    level: "Select level",
+    field: "Select field",
+    country: "Select country",
+    requirements: ""
+  });
+  const [updating, setUpdating] = useState(false);
+
+  const handleOpenEditModal = (s) => {
+    const formattedDeadline = s.deadline ? new Date(s.deadline).toISOString().split('T')[0] : "";
+    setEditModal({ isOpen: true, scholarshipId: s.id });
+    setEditForm({
+      name: s.name || "",
+      providerName: s.provider_name || "",
+      description: s.description || "",
+      amount: s.amount || "",
+      deadline: formattedDeadline,
+      level: s.level || "Select level",
+      field: s.field || "Select field",
+      country: s.country || "Select country",
+      requirements: s.requirements || ""
+    });
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModal({ isOpen: false, scholarshipId: null });
+  };
+
+  const handleSaveEditScholarship = async (e) => {
+    e.preventDefault();
+    if (!editForm.name.trim() || !editForm.description.trim() || !editForm.amount.trim() || !editForm.deadline) {
+      toast.error("Please fill in all core scholarship details.");
       return;
     }
 
     try {
-      await Api.delete(`/api/scholarships/${id}`);
+      setUpdating(true);
+      await Api.put(`/api/scholarships/${editModal.scholarshipId}`, editForm);
+      toast.success("Scholarship listing updated successfully!");
+      handleCloseEditModal();
+      fetchProviderData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update scholarship listing.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (id) => {
+    setDeleteModal({ isOpen: true, scholarshipId: id });
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({ isOpen: false, scholarshipId: null });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.scholarshipId) return;
+    try {
+      setDeleting(true);
+      await Api.delete(`/api/scholarships/${deleteModal.scholarshipId}`);
       toast.success("Scholarship listing deleted successfully.");
-      
-      // Reload
+      handleCloseDeleteModal();
       fetchProviderData();
     } catch (error) {
       toast.error("Failed to delete scholarship.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -339,9 +403,14 @@ export default function ProviderDashboard() {
                           <span>⏰ Deadline: {new Date(s.deadline).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      <button className="pd-btn pd-btn-danger" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => handleDeleteScholarship(s.id)}>
-                        Delete Listing
-                      </button>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <button className="pd-btn pd-btn-outline" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => handleOpenEditModal(s)}>
+                          Edit Listing
+                        </button>
+                        <button className="pd-btn pd-btn-danger" style={{ padding: "6px 12px", fontSize: "12px" }} onClick={() => handleOpenDeleteModal(s.id)}>
+                          Delete Listing
+                        </button>
+                      </div>
                     </div>
                     <p style={{ fontSize: "13.5px", color: "#CBD5E1", marginTop: "12px", lineHeight: "1.4" }}>
                       {s.description}
@@ -474,6 +543,247 @@ export default function ProviderDashboard() {
           </section>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(15, 23, 42, 0.8)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "16px"
+        }}>
+          <div style={{
+            background: "#1E293B",
+            border: "1px solid #334155",
+            borderRadius: "16px",
+            padding: "24px",
+            width: "100%",
+            maxWidth: "440px",
+            color: "white",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <h3 style={{ fontSize: "18px", fontWeight: "700", margin: "0 0 12px 0", color: "#F87171" }}>
+              Confirm Deletion
+            </h3>
+            <p style={{ color: "#CBD5E1", fontSize: "14px", lineHeight: "1.5", margin: "0 0 20px 0" }}>
+              Are you sure you want to delete this scholarship listing? All associated applications will also be permanently removed.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button
+                type="button"
+                onClick={handleCloseDeleteModal}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "1px solid #475569",
+                  color: "#CBD5E1",
+                  fontWeight: "600",
+                  cursor: "pointer"
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  background: "#EF4444",
+                  border: "none",
+                  color: "white",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  opacity: deleting ? 0.7 : 1
+                }}
+              >
+                {deleting ? "Deleting..." : "Yes, Delete Listing"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Edit Scholarship Modal */}
+      {editModal.isOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(15, 23, 42, 0.8)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "16px"
+        }}>
+          <div style={{
+            background: "#1E293B",
+            border: "1px solid #334155",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "100%",
+            maxWidth: "600px",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            color: "white",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#F5C842" }}>
+                Edit Scholarship Listing
+              </h3>
+              <button
+                onClick={handleCloseEditModal}
+                style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form className="pd-form" onSubmit={handleSaveEditScholarship}>
+              <div className="pd-input-group">
+                <label htmlFor="edit-name">Scholarship Name</label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  className="pd-input"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+
+              <div className="pd-row-split">
+                <div className="pd-input-group">
+                  <label htmlFor="edit-amount">Award Amount</label>
+                  <input
+                    id="edit-amount"
+                    type="text"
+                    className="pd-input"
+                    value={editForm.amount}
+                    onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                  />
+                </div>
+                <div className="pd-input-group">
+                  <label htmlFor="edit-deadline">Deadline Date</label>
+                  <input
+                    id="edit-deadline"
+                    type="date"
+                    className="pd-input"
+                    value={editForm.deadline}
+                    onChange={(e) => setEditForm({ ...editForm, deadline: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="edit-level">Target Education Level</label>
+                <select
+                  id="edit-level"
+                  className="pd-input"
+                  value={editForm.level}
+                  onChange={(e) => setEditForm({ ...editForm, level: e.target.value })}
+                >
+                  {LEVELS.map(l => (
+                    <option key={l} value={l} disabled={l === "Select level"}>{l}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="edit-field">Target Field of Study</label>
+                <select
+                  id="edit-field"
+                  className="pd-input"
+                  value={editForm.field}
+                  onChange={(e) => setEditForm({ ...editForm, field: e.target.value })}
+                >
+                  {FIELDS.map(f => (
+                    <option key={f} value={f} disabled={f === "Select field"}>{f}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="edit-country">Target Region / Nationality</label>
+                <select
+                  id="edit-country"
+                  className="pd-input"
+                  value={editForm.country}
+                  onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+                >
+                  {COUNTRIES.map(c => (
+                    <option key={c} value={c} disabled={c === "Select country"}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="edit-desc">Description</label>
+                <textarea
+                  id="edit-desc"
+                  className="pd-textarea"
+                  rows={4}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                />
+              </div>
+
+              <div className="pd-input-group">
+                <label htmlFor="edit-req">Requirements / Qualifications</label>
+                <input
+                  id="edit-req"
+                  type="text"
+                  className="pd-input"
+                  value={editForm.requirements}
+                  onChange={(e) => setEditForm({ ...editForm, requirements: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  style={{
+                    padding: "10px 18px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    border: "1px solid #475569",
+                    color: "#CBD5E1",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updating}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    background: "#10B981",
+                    border: "none",
+                    color: "white",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    opacity: updating ? 0.7 : 1
+                  }}
+                >
+                  {updating ? "Saving Changes..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

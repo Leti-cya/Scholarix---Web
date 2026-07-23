@@ -126,10 +126,10 @@ function StatCard({ stat }) {
 /**
  * DeadlineItem — a single row in the upcoming deadlines list.
  */
-function DeadlineItem({ item }) {
+function DeadlineItem({ item, onViewDetails }) {
   const urgency = deadlineUrgency(item.daysLeft);
   return (
-    <li className="sd-deadline-item">
+    <li className="sd-deadline-item" style={{ cursor: "pointer" }} onClick={() => onViewDetails(item.id)}>
       <div className={`sd-deadline-dot dot-${urgency}`} aria-hidden="true" />
 
       <div className="sd-deadline-info">
@@ -145,10 +145,7 @@ function DeadlineItem({ item }) {
   );
 }
 
-/**
- * RecommendationCard — one recommended scholarship.
- */
-function RecommendationCard({ item, onApply, isApplied }) {
+function RecommendationCard({ item, onApply, onViewDetails, isApplied }) {
   return (
     <div className="sd-rec-card card-blue">
       <div className="sd-rec-match" title="AI match score">
@@ -157,7 +154,9 @@ function RecommendationCard({ item, onApply, isApplied }) {
       </div>
 
       <div className="sd-rec-body">
-        <h4 className="sd-rec-name">{item.name}</h4>
+        <h4 className="sd-rec-name" style={{ cursor: "pointer" }} onClick={() => onViewDetails(item.id)}>
+          {item.name}
+        </h4>
         <p className="sd-rec-provider">{item.provider_name}</p>
         <span className="sd-rec-field-badge">{item.field}</span>
       </div>
@@ -167,13 +166,20 @@ function RecommendationCard({ item, onApply, isApplied }) {
         <div className="sd-rec-deadline">⏰ {new Date(item.deadline).toLocaleDateString()}</div>
       </div>
 
-      <div className="sd-rec-actions">
+      <div className="sd-rec-actions" style={{ display: "flex", gap: "8px" }}>
+        <button
+          className="sd-btn-outline"
+          style={{ flex: 1, padding: "8px", fontSize: "13px" }}
+          onClick={() => onViewDetails(item.id)}
+        >
+          Details
+        </button>
         {isApplied ? (
-          <button className="sd-btn-primary" style={{ width: "100%", background: "#4A5568", cursor: "default" }} disabled>
+          <button className="sd-btn-primary" style={{ flex: 1, background: "#4A5568", cursor: "default", padding: "8px", fontSize: "13px" }} disabled>
             ✓ Applied
           </button>
         ) : (
-          <button className="sd-btn-primary" style={{ width: "100%" }} onClick={() => onApply(item.id, item.name)}>
+          <button className="sd-btn-primary" style={{ flex: 1, padding: "8px", fontSize: "13px" }} onClick={() => onApply(item.id, item.name)}>
             Apply →
           </button>
         )}
@@ -291,20 +297,37 @@ export default function StudentDashboard() {
     fetchDashboardData();
   }, []);
 
-  const handleApply = async (scholarshipId, scholarshipName) => {
-    const essay = window.prompt(`Apply for ${scholarshipName}\n\nEnter a brief statement/essay stating why you qualify:`);
-    if (essay === null) return; // cancelled
-    if (!essay.trim()) {
+  const [applyModal, setApplyModal] = useState({ isOpen: false, scholarshipId: null, scholarshipName: "" });
+  const [essayText, setEssayText] = useState("");
+  const [submittingApp, setSubmittingApp] = useState(false);
+
+  const handleOpenApplyModal = (scholarshipId, scholarshipName) => {
+    setApplyModal({ isOpen: true, scholarshipId, scholarshipName });
+    setEssayText("");
+  };
+
+  const handleCloseApplyModal = () => {
+    setApplyModal({ isOpen: false, scholarshipId: null, scholarshipName: "" });
+    setEssayText("");
+  };
+
+  const handleSubmitApplication = async (e) => {
+    e.preventDefault();
+    if (!essayText.trim()) {
       toast.error("An essay statement is required to apply.");
       return;
     }
 
     try {
-      await applyScholarship({ scholarshipId, essay });
+      setSubmittingApp(true);
+      await applyScholarship({ scholarshipId: applyModal.scholarshipId, essay: essayText });
       toast.success("Application submitted successfully!");
-      fetchDashboardData(); // reload
+      handleCloseApplyModal();
+      fetchDashboardData();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to submit application.");
+    } finally {
+      setSubmittingApp(false);
     }
   };
 
@@ -358,6 +381,9 @@ export default function StudentDashboard() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="sd-btn-outline" style={{ border: '1px solid #F5C842', color: '#F5C842' }} onClick={() => navigate('/scholarships')}>
+            Explore All Scholarships 🔍
+          </button>
           <button className="sd-btn-outline" style={{ border: '1px solid #EF4444', color: '#EF4444' }} onClick={handleLogout} aria-label="Sign out">
             Sign Out
           </button>
@@ -386,7 +412,7 @@ export default function StudentDashboard() {
             {upcomingDeadlines.length > 0 ? (
               <ul className="sd-deadline-list" aria-label="Upcoming scholarship deadlines">
                 {upcomingDeadlines.map((item) => (
-                  <DeadlineItem key={item.id} item={item} />
+                  <DeadlineItem key={item.id} item={item} onViewDetails={(sId) => navigate('/scholarships/' + sId)} />
                 ))}
               </ul>
             ) : (
@@ -489,7 +515,8 @@ export default function StudentDashboard() {
                     <RecommendationCard
                       key={item.id}
                       item={item}
-                      onApply={handleApply}
+                      onApply={handleOpenApplyModal}
+                      onViewDetails={(sId) => navigate('/scholarships/' + sId)}
                       isApplied={isAlreadyApplied}
                     />
                   );
@@ -504,6 +531,105 @@ export default function StudentDashboard() {
           </section>
         </div>
       </div>
+
+      {/* Application Modal */}
+      {applyModal.isOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(15, 23, 42, 0.8)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "16px"
+        }}>
+          <div style={{
+            background: "#1E293B",
+            border: "1px solid #334155",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "100%",
+            maxWidth: "540px",
+            color: "white",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0 }}>
+                Apply for {applyModal.scholarshipName}
+              </h3>
+              <button
+                onClick={handleCloseApplyModal}
+                style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ color: "#94A3B8", fontSize: "14px", marginBottom: "20px", lineHeight: "1.5" }}>
+              Please write a brief essay or personal statement explaining your eligibility and how this scholarship will support your educational goals.
+            </p>
+            <form onSubmit={handleSubmitApplication}>
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#CBD5E1", marginBottom: "8px" }}>
+                  Personal Statement / Qualification Essay
+                </label>
+                <textarea
+                  rows={6}
+                  value={essayText}
+                  onChange={(e) => setEssayText(e.target.value)}
+                  placeholder="Explain why you qualify for this scholarship..."
+                  style={{
+                    width: "100%",
+                    background: "#0F172A",
+                    border: "1px solid #334155",
+                    borderRadius: "8px",
+                    padding: "12px",
+                    color: "white",
+                    fontSize: "14px",
+                    resize: "vertical",
+                    outline: "none"
+                  }}
+                  autoFocus
+                />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={handleCloseApplyModal}
+                  style={{
+                    padding: "10px 18px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    border: "1px solid #475569",
+                    color: "#CBD5E1",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingApp}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+                    border: "none",
+                    color: "white",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    opacity: submittingApp ? 0.7 : 1
+                  }}
+                >
+                  {submittingApp ? "Submitting..." : "Submit Application →"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -77,7 +77,11 @@ const getScholarshipsByProvider = async (providerId) => {
 
 const getScholarshipById = async (id) => {
     const result = await pool.query(
-        "SELECT * FROM scholarships WHERE id = $1",
+        `SELECT s.*,
+                u.org_name, u.org_type, u.website, u.contact_name, u.contact_title, u.email as provider_email
+         FROM scholarships s
+         LEFT JOIN users u ON s.provider_id = u.id
+         WHERE s.id = $1`,
         [id]
     );
     return result.rows[0];
@@ -103,11 +107,36 @@ const getMatchingScholarships = async (level, field, country) => {
     return result.rows;
 };
 
+const updateScholarship = async (id, providerId, data) => {
+    const result = await pool.query(
+        `UPDATE scholarships
+         SET name = $1, provider_name = $2, description = $3, amount = $4,
+             deadline = $5, level = $6, field = $7, country = $8, requirements = $9
+         WHERE id = $10 AND provider_id = $11
+         RETURNING *`,
+        [
+            data.name,
+            data.providerName,
+            data.description,
+            data.amount,
+            data.deadline,
+            data.level,
+            data.field,
+            data.country,
+            data.requirements,
+            id,
+            providerId
+        ]
+    );
+    return result.rows[0];
+};
+
 module.exports = {
     createScholarship,
     getAllScholarships,
     getScholarshipsByProvider,
     getScholarshipById,
+    updateScholarship,
     deleteScholarship,
     getMatchingScholarships
 };

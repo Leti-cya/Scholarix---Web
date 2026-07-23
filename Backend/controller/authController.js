@@ -3,7 +3,8 @@ const JWT = require("jsonwebtoken")
 
 const {
     findUserByEmail,
-    createUser
+    createUser,
+    updateUserPassword
 } = require("../model/userModel")
 
 const register = async (req, res) => {
@@ -137,9 +138,49 @@ const getProfile = async (req, res) => {
     }
 }
 
+const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+
+        if (!email || !newPassword) {
+            return res.status(400).json({
+                message: "Email and new password are required."
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters."
+            });
+        }
+
+        const user = await findUserByEmail(email);
+
+        if (!user) {
+            return res.status(404).json({
+                message: "No account found with this email address."
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await updateUserPassword(email, hashedPassword);
+
+        res.status(200).json({
+            message: "Password updated successfully in database."
+        });
+
+    } catch (e) {
+        console.error("RESET PASSWORD ERROR:", e);
+        res.status(500).json({
+            message: e.message
+        });
+    }
+}
+
 module.exports = {
     register,
     login,
     checkEmail,
-    getProfile
+    getProfile,
+    resetPassword
 }

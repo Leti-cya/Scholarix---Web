@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+SELECT * FROM users;
+
+
 -- Scholarships Table (Provider CRUD)
 CREATE TABLE IF NOT EXISTS scholarships (
     id SERIAL PRIMARY KEY,
@@ -45,6 +48,9 @@ CREATE TABLE IF NOT EXISTS scholarships (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+SELECT * FROM scholarships;
+
+
 -- Applications Table (Student applying to scholarships)
 CREATE TABLE IF NOT EXISTS applications (
     id SERIAL PRIMARY KEY,
@@ -56,6 +62,9 @@ CREATE TABLE IF NOT EXISTS applications (
     UNIQUE(scholarship_id, student_id)
 );
 
+SELECT * FROM applications;
+
+
 -- Saved Scholarships Table (Student bookmarking scholarships)
 CREATE TABLE IF NOT EXISTS saved_scholarships (
     id SERIAL PRIMARY KEY,
@@ -64,6 +73,9 @@ CREATE TABLE IF NOT EXISTS saved_scholarships (
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(scholarship_id, student_id)
 );
+
+SELECT * FROM saved_scholarships;
+
 
 -- Create index for performance on matching queries
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
