@@ -439,6 +439,9 @@ export default function StudentDashboard() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="sd-btn-outline" style={{ border: '1px solid #38BDF8', color: '#38BDF8' }} onClick={() => navigate('/applications')}>
+            My Applications 📝
+          </button>
           <button className="sd-btn-outline" style={{ border: '1px solid #F5C842', color: '#F5C842' }} onClick={() => navigate('/scholarships')}>
             Explore All Scholarships 🔍
           </button>
@@ -480,10 +483,16 @@ export default function StudentDashboard() {
 
           {/* SUBMITTED APPLICATIONS LIST */}
           <section className="sd-section" aria-labelledby="notif-heading">
-            <div className="sd-section-header">
+            <div className="sd-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="sd-section-heading" id="notif-heading">
                 Application Tracking
               </h2>
+              <button
+                style={{ background: 'none', border: 'none', color: '#F5C842', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
+                onClick={() => navigate('/applications')}
+              >
+                View All →
+              </button>
             </div>
             {applications.length > 0 ? (
               <ul className="sd-notif-list" aria-label="Submitted applications list">

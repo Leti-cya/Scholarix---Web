@@ -141,6 +141,12 @@ export default function AllScholarships() {
             >
               ← Dashboard
             </button>
+            <button
+              onClick={() => navigate("/applications")}
+              style={{ background: "none", border: "none", color: "#38BDF8", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}
+            >
+              My Applications 📝
+            </button>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "white" }}>
               Explore All Scholarships
             </h1>

@@ -11,6 +11,7 @@ import ProviderDashboard from './pages/ProviderDashboard'
 import ScholarshipDetails from './pages/ScholarshipDetails'
 import AllScholarships from './pages/AllScholarships'
 import ProviderProfile from './pages/ProviderProfile'
+import StudentApplications from './pages/StudentApplications'
 import ProtectedRoute from './service/ProtectedRoute'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path = "/dashboard" element = {<StudentDashboard />} />
             <Route path = "/scholarships" element = {<AllScholarships />} />
             <Route path = "/scholarships/:id" element = {<ScholarshipDetails />} />
+            <Route path = "/applications" element = {<StudentApplications />} />
           </Route>
 
           {/* Protected Provider Routes */}
