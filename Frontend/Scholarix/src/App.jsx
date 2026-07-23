@@ -10,6 +10,7 @@ import StudentDashboard from './pages/StudentDashboard'
 import ProviderDashboard from './pages/ProviderDashboard'
 import ScholarshipDetails from './pages/ScholarshipDetails'
 import AllScholarships from './pages/AllScholarships'
+import ProviderProfile from './pages/ProviderProfile'
 import ProtectedRoute from './service/ProtectedRoute'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path = "/login" element = {<Login />} />
           <Route path = "/register" element = {<Signup />} />
           <Route path = "/forgot-password" element = {<ForgotPassword />} />
+          <Route path = "/providers/:id" element = {<ProviderProfile />} />
           
           {/* Protected Student Routes */}
           <Route element={<ProtectedRoute allowedRoles={['student']} />}>

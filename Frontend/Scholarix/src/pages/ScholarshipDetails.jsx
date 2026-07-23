@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { getScholarshipById, getStudentApplications, applyScholarship } from "../service/Api";
 import "./StudentDashboard.css";
@@ -117,9 +117,28 @@ export default function ScholarshipDetails() {
         <div style={{ background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)", border: "1px solid #334155", borderRadius: "16px", padding: "32px", marginBottom: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <span style={{ background: "rgba(245, 200, 66, 0.15)", color: "#F5C842", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "600" }}>
-                {scholarship.provider_name}
-              </span>
+              {scholarship.provider_id ? (
+                <Link
+                  to={`/providers/${scholarship.provider_id}`}
+                  style={{
+                    background: "rgba(245, 200, 66, 0.15)",
+                    color: "#F5C842",
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    textDecoration: "none",
+                    display: "inline-block",
+                    border: "1px solid rgba(245, 200, 66, 0.3)"
+                  }}
+                >
+                  🏛️ {scholarship.provider_name} →
+                </Link>
+              ) : (
+                <span style={{ background: "rgba(245, 200, 66, 0.15)", color: "#F5C842", padding: "4px 12px", borderRadius: "20px", fontSize: "13px", fontWeight: "600" }}>
+                  {scholarship.provider_name}
+                </span>
+              )}
               <h1 style={{ fontSize: "28px", fontWeight: "800", marginTop: "12px", marginBottom: "8px", color: "#FFFFFF" }}>
                 {scholarship.name}
               </h1>
@@ -250,6 +269,28 @@ export default function ScholarshipDetails() {
                   <div>
                     <span style={{ color: "#94A3B8", fontSize: "12px", display: "block" }}>Contact Email</span>
                     <span style={{ color: "#E2E8F0" }}>✉ {scholarship.provider_email}</span>
+                  </div>
+                )}
+
+                {scholarship.provider_id && (
+                  <div style={{ marginTop: "8px", paddingTop: "12px", borderTop: "1px solid #334155" }}>
+                    <Link
+                      to={`/providers/${scholarship.provider_id}`}
+                      style={{
+                        display: "block",
+                        textAlign: "center",
+                        background: "rgba(245, 200, 66, 0.1)",
+                        color: "#F5C842",
+                        border: "1px solid rgba(245, 200, 66, 0.3)",
+                        padding: "10px",
+                        borderRadius: "8px",
+                        fontWeight: "700",
+                        fontSize: "13px",
+                        textDecoration: "none"
+                      }}
+                    >
+                      🏛️ View Full Provider Profile →
+                    </Link>
                   </div>
                 )}
               </div>

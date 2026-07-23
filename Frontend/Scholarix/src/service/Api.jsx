@@ -58,4 +58,8 @@ export const updateScholarship = (id, data) => {
     return Api.put(`/api/scholarships/${id}`, data);
 };
 
+export const getProviderPublicProfile = (id) => {
+    return Api.get(`/api/auth/provider/${id}`);
+};
+
 export default Api;

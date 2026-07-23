@@ -262,8 +262,24 @@ export default function AllScholarships() {
                 >
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
-                      <span style={{ background: "rgba(245, 200, 66, 0.15)", color: "#F5C842", padding: "4px 10px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
-                        {s.provider_name}
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (s.provider_id) navigate(`/providers/${s.provider_id}`);
+                        }}
+                        title="View provider profile"
+                        style={{
+                          background: "rgba(245, 200, 66, 0.15)",
+                          color: "#F5C842",
+                          padding: "4px 10px",
+                          borderRadius: "16px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: s.provider_id ? "pointer" : "default",
+                          border: "1px solid rgba(245, 200, 66, 0.2)"
+                        }}
+                      >
+                        🏛️ {s.provider_name}
                       </span>
                       <span style={{ fontSize: "18px", fontWeight: "800", color: "#F5C842" }}>
                         {s.amount}

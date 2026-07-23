@@ -7,7 +7,8 @@ const {
     checkEmail,
     getProfile,
     updateProfile,
-    resetPassword
+    resetPassword,
+    getProviderPublicProfile
 } = require("../controller/authController")
 
 const router = express.Router()
@@ -18,5 +19,6 @@ router.get("/check-email", checkEmail)
 router.get("/profile", verifyToken, getProfile)
 router.put("/profile", verifyToken, updateProfile)
 router.post("/reset-password", resetPassword)
+router.get("/provider/:id", getProviderPublicProfile)
 
 module.exports = router

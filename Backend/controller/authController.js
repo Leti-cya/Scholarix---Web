@@ -5,8 +5,10 @@ const {
     findUserByEmail,
     createUser,
     updateUserPassword,
-    updateUserProfile
+    updateUserProfile,
+    findUserById
 } = require("../model/userModel")
+const { getScholarshipsByProvider } = require("../model/scholarshipModel");
 
 const register = async (req, res) => {
     try {
@@ -199,11 +201,33 @@ const resetPassword = async (req, res) => {
     }
 }
 
+const getProviderPublicProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await findUserById(id);
+        if (!user || user.role !== "provider") {
+            return res.status(404).json({ message: "Provider profile not found." });
+        }
+        const scholarships = await getScholarshipsByProvider(id);
+        const { password, ...safeUser } = user;
+        res.status(200).json({
+            provider: safeUser,
+            scholarships
+        });
+    } catch (e) {
+        console.error("GET PROVIDER PUBLIC PROFILE ERROR:", e);
+        res.status(500).json({
+            message: e.message
+        });
+    }
+}
+
 module.exports = {
     register,
     login,
     checkEmail,
     getProfile,
     updateProfile,
-    resetPassword
+    resetPassword,
+    getProviderPublicProfile
 }
