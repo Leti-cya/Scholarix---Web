@@ -1,0 +1,300 @@
+/* Collapsible Navigation & Single Top Bar Layout Styles */
+
+.sx-layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--sx-bg);
+  color: var(--sx-text-primary);
+}
+
+/* Single Top Sticky Header Bar (Exact 60px Height Across All Pages) */
+.sx-top-bar {
+  height: 60px;
+  background-color: var(--sx-sidebar-bg);
+  border-bottom: 1px solid var(--sx-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  box-shadow: var(--sx-shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sx-top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sx-hamburger-btn {
+  background: var(--sx-border-light);
+  border: 1px solid var(--sx-border);
+  color: var(--sx-text-primary);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--sx-radius-sm);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sx-hamburger-btn:hover {
+  background: var(--sx-surface-hover);
+  color: var(--sx-gold);
+}
+
+.sx-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--sx-text-primary);
+}
+
+.sx-brand-badge {
+  font-size: 18px;
+  background: var(--sx-gold);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--sx-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0F172A;
+  font-weight: 800;
+}
+
+.sx-brand-name {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--sx-text-primary);
+}
+
+.sx-top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sx-theme-toggle-top {
+  background: var(--sx-surface);
+  border: 1px solid var(--sx-border);
+  color: var(--sx-text-secondary);
+  padding: 7px 14px;
+  border-radius: var(--sx-radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sx-theme-toggle-top:hover {
+  background: var(--sx-surface-hover);
+  color: var(--sx-text-primary);
+  border-color: var(--sx-gold);
+}
+
+/* Sidebar Backdrop Overlay with Stronger Blur */
+.sx-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 250;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sx-drawer-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+/* Collapsible Smooth Sliding Sidebar (Opaque Glass & High Readability) */
+.sx-collapsible-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 280px;
+  background-color: var(--sx-sidebar-bg);
+  border-right: 1px solid var(--sx-border);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 16px;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--sx-shadow-md);
+}
+
+.sx-collapsible-sidebar.open {
+  transform: translateX(0);
+}
+
+.sx-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sx-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--sx-border);
+}
+
+.sx-close-sidebar-btn {
+  background: transparent;
+  border: none;
+  color: var(--sx-text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.sx-close-sidebar-btn:hover {
+  color: var(--sx-text-primary);
+}
+
+/* User Card Snippet */
+.sx-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--sx-surface);
+  border: 1px solid var(--sx-border);
+  border-radius: var(--sx-radius);
+}
+
+.sx-sidebar-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--sx-radius-sm);
+  background: var(--sx-gold);
+  color: #0F172A;
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sx-sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sx-sidebar-user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--sx-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sx-sidebar-user-role {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sx-gold);
+  letter-spacing: 0.5px;
+}
+
+/* Navigation Links */
+.sx-sidebar-nav {
+  margin-top: 4px;
+}
+
+.sx-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sx-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--sx-radius-sm);
+  color: var(--sx-text-muted);
+  text-decoration: none;
+  font-size: 14.5px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.sx-nav-item:hover {
+  background: var(--sx-surface-hover);
+  color: var(--sx-text-primary);
+}
+
+.sx-nav-item.active {
+  background: var(--sx-gold);
+  color: #0F172A;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(245, 200, 66, 0.25);
+}
+
+.sx-nav-icon {
+  font-size: 18px;
+}
+
+/* Sidebar Footer Controls */
+.sx-sidebar-footer {
+  border-top: 1px solid var(--sx-border);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sx-signout-btn {
+  background: transparent;
+  border: 1px solid var(--sx-red);
+  color: var(--sx-red);
+  padding: 10px 14px;
+  border-radius: var(--sx-radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.sx-signout-btn:hover {
+  background: var(--sx-red-bg);
+}
+
+/* Main Content Area */
+.sx-main-content {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
