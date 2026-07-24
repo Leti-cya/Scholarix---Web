@@ -67,6 +67,17 @@
   --color-pill-bg:      rgba(15, 23, 42, 0.05); /* neutral tag/pill background */
   --color-surface-hover: #F8FAFC; /* hover shade, one step off surface */
 
+  /* Chart status colours — match the .sa-status-* badge hues exactly so a
+     chart bar and its corresponding badge are always the same colour.
+     Validated as a categorical set against this page's light/dark surfaces
+     (CVD-safe adjacent pairs, contrast, lightness band). */
+  --chart-submitted:     #3B82F6;
+  --chart-under-review:  #F59E0B;
+  --chart-shortlisted:   #A855F7;
+  --chart-approved:      #10B981;
+  --chart-rejected:      #EF4444;
+  --chart-sequential:    #2563EB;  /* single-series trend/ranking charts */
+
   /* Typography */
   --font-display:  "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-body:     "Inter", system-ui, -apple-system, sans-serif;
@@ -107,6 +118,10 @@
   --color-text-dim:     #CBD5E1;
   --color-pill-bg:      rgba(255, 255, 255, 0.05);
   --color-surface-hover: #2D3748;
+
+  /* Stepped darker for the dark surface — same hues, validated lightness band */
+  --chart-under-review: #D97706;
+  --chart-approved:     #059669;
 
   --color-blue-light:   rgba(29, 78, 216, 0.16);
   --color-blue-border:  rgba(59, 130, 246, 0.35);

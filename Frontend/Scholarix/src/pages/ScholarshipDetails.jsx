@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { getScholarshipById, getStudentApplications, applyScholarship } from "../service/Api";
+import { getScholarshipById, getStudentApplications, applyScholarship, getProfile, saveScholarship, unsaveScholarship, getSavedScholarshipIds } from "../service/Api";
 import "./StudentDashboard.css";
 import ThemeToggle from "../component/ThemeToggle";
+import { checkEligibility } from "../utils/eligibility";
 
 export default function ScholarshipDetails() {
   const { id } = useParams();
@@ -13,6 +14,8 @@ export default function ScholarshipDetails() {
   const [loading, setLoading] = useState(true);
   const [isApplied, setIsApplied] = useState(false);
   const [appliedStatus, setAppliedStatus] = useState("");
+  const [student, setStudent] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [essayText, setEssayText] = useState("");
@@ -46,6 +49,33 @@ export default function ScholarshipDetails() {
   useEffect(() => {
     fetchDetails();
   }, [id]);
+
+  useEffect(() => {
+    getProfile()
+      .then(res => setStudent(res.data))
+      .catch(() => {}); // not a student / not logged in — eligibility checks just no-op
+  }, []);
+
+  useEffect(() => {
+    getSavedScholarshipIds()
+      .then(res => setIsSaved(res.data.ids.includes(parseInt(id))))
+      .catch(() => {});
+  }, [id]);
+
+  const handleToggleSave = async () => {
+    try {
+      if (isSaved) {
+        await unsaveScholarship(id);
+        setIsSaved(false);
+      } else {
+        await saveScholarship(id);
+        setIsSaved(true);
+        toast.success("Saved to your list");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update saved scholarships.");
+    }
+  };
 
   const handleSubmitApplication = async (e) => {
     e.preventDefault();
@@ -96,6 +126,10 @@ export default function ScholarshipDetails() {
 
   const deadlineDate = new Date(scholarship.deadline);
   const diffDays = Math.ceil((deadlineDate - new Date()) / (1000 * 60 * 60 * 24));
+  const { eligible, reasons } = checkEligibility(scholarship, student);
+  const levelMismatch = student && scholarship.level !== "All Levels" && scholarship.level !== student.level;
+  const fieldMismatch = student && scholarship.field !== "All Fields" && scholarship.field !== student.field;
+  const countryMismatch = student && scholarship.country !== "Global" && scholarship.country !== "Other" && scholarship.country !== student.country;
 
   return (
     <div style={{ background: "var(--color-bg)", minHeight: "100vh", color: "var(--color-text)", paddingBottom: "60px" }}>
@@ -109,6 +143,18 @@ export default function ScholarshipDetails() {
             ← Back
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <button
+              onClick={handleToggleSave}
+              style={{
+                display: "flex", alignItems: "center", gap: "6px",
+                background: isSaved ? "rgba(245, 200, 66, 0.15)" : "transparent",
+                border: isSaved ? "1px solid rgba(245, 200, 66, 0.4)" : "1px solid var(--color-border-dark)",
+                color: isSaved ? "#F5C842" : "var(--color-text-dim)",
+                borderRadius: "8px", padding: "7px 14px", fontSize: "13px", fontWeight: "600", cursor: "pointer"
+              }}
+            >
+              {isSaved ? "🔖 Saved" : "🏷️ Save"}
+            </button>
             <span style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>Opportunity #{scholarship.id}</span>
             <ThemeToggle />
           </div>
@@ -173,6 +219,19 @@ export default function ScholarshipDetails() {
               <button disabled style={{ background: "var(--color-border)", color: "var(--color-text-muted)", border: "none", padding: "12px 24px", borderRadius: "10px", fontWeight: "600", cursor: "not-allowed" }}>
                 Applications Closed
               </button>
+            ) : !eligible ? (
+              <div style={{ textAlign: "right" }}>
+                <button
+                  disabled
+                  title={reasons.join(" · ")}
+                  style={{ background: "rgba(239, 68, 68, 0.12)", color: "#EF4444", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "12px 24px", borderRadius: "10px", fontWeight: "700", fontSize: "15px", cursor: "not-allowed" }}
+                >
+                  You're Not Eligible
+                </button>
+                <p style={{ color: "#EF4444", fontSize: "12px", marginTop: "8px", maxWidth: "360px" }}>
+                  {reasons.join(" · ")}
+                </p>
+              </div>
             ) : (
               <button
                 onClick={() => setApplyModalOpen(true)}
@@ -194,16 +253,22 @@ export default function ScholarshipDetails() {
                 Eligibility Criteria
               </h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
-                <div style={{ background: "var(--color-bg)", padding: "12px", borderRadius: "8px", border: "1px solid var(--color-border)" }}>
-                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase" }}>Education Level</div>
+                <div style={{ background: "var(--color-bg)", padding: "12px", borderRadius: "8px", border: levelMismatch ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid var(--color-border)" }}>
+                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+                    Education Level {student && (levelMismatch ? <span style={{ color: "#EF4444" }}>✗</span> : <span style={{ color: "#10B981" }}>✓</span>)}
+                  </div>
                   <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--color-text)", marginTop: "4px" }}>{scholarship.level}</div>
                 </div>
-                <div style={{ background: "var(--color-bg)", padding: "12px", borderRadius: "8px", border: "1px solid var(--color-border)" }}>
-                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase" }}>Field of Study</div>
+                <div style={{ background: "var(--color-bg)", padding: "12px", borderRadius: "8px", border: fieldMismatch ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid var(--color-border)" }}>
+                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+                    Field of Study {student && (fieldMismatch ? <span style={{ color: "#EF4444" }}>✗</span> : <span style={{ color: "#10B981" }}>✓</span>)}
+                  </div>
                   <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--color-text)", marginTop: "4px" }}>{scholarship.field}</div>
                 </div>
-                <div style={{ background: "var(--color-bg)", padding: "12px", borderRadius: "8px", border: "1px solid var(--color-border)" }}>
-                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase" }}>Region / Country</div>
+                <div style={{ background: "var(--color-bg)", padding: "12px", borderRadius: "8px", border: countryMismatch ? "1px solid rgba(239, 68, 68, 0.4)" : "1px solid var(--color-border)" }}>
+                  <div style={{ fontSize: "11px", color: "var(--color-text-muted)", textTransform: "uppercase" }}>
+                    Region / Country {student && (countryMismatch ? <span style={{ color: "#EF4444" }}>✗</span> : <span style={{ color: "#10B981" }}>✓</span>)}
+                  </div>
                   <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--color-text)", marginTop: "4px" }}>{scholarship.country}</div>
                 </div>
               </div>

@@ -5,7 +5,8 @@ const {
     updateApplicationStatus
 } = require("../model/applicationModel");
 
-const { getScholarshipById } = require("../model/scholarshipModel");
+const { getScholarshipById, isEligibleForScholarship } = require("../model/scholarshipModel");
+const { findUserByEmail } = require("../model/userModel");
 const { createNotification } = require("../model/notificationModel");
 
 const STATUS_COPY = {
@@ -32,11 +33,27 @@ const submitApplication = async (req, res) => {
             });
         }
 
+        const scholarship = await getScholarshipById(scholarshipId);
+        if (!scholarship) {
+            return res.status(404).json({
+                message: "Scholarship not found."
+            });
+        }
+
+        const student = await findUserByEmail(req.user.email);
+        const { eligible, reasons } = isEligibleForScholarship(scholarship, student);
+
+        if (!eligible) {
+            return res.status(403).json({
+                message: `You don't meet the eligibility criteria for this scholarship: ${reasons.join("; ")}.`,
+                reasons
+            });
+        }
+
         const application = await createApplication(req.user.id, scholarshipId, essay);
 
         try {
-            const scholarship = await getScholarshipById(scholarshipId);
-            if (scholarship && scholarship.provider_id) {
+            if (scholarship.provider_id) {
                 await createNotification({
                     userId: scholarship.provider_id,
                     type: "info",

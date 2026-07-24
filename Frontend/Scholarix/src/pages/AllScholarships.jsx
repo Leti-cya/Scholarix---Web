@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Api, { getStudentApplications, applyScholarship } from "../service/Api";
+import Api, { getStudentApplications, applyScholarship, getProfile, saveScholarship, unsaveScholarship, getSavedScholarshipIds } from "../service/Api";
 import "./StudentDashboard.css";
 import ThemeToggle from "../component/ThemeToggle";
+import { checkEligibility } from "../utils/eligibility";
 
 const LEVELS = [
   "All Levels",
@@ -45,6 +46,8 @@ export default function AllScholarships() {
 
   const [scholarships, setScholarships] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [student, setStudent] = useState(null);
+  const [savedIds, setSavedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
   // Filter & Search state
@@ -87,6 +90,35 @@ export default function AllScholarships() {
   useEffect(() => {
     fetchScholarships();
   }, [selectedLevel, selectedField, selectedCountry]);
+
+  useEffect(() => {
+    getProfile()
+      .then(res => setStudent(res.data))
+      .catch(() => {}); // not a student / not logged in — eligibility checks just no-op
+  }, []);
+
+  useEffect(() => {
+    getSavedScholarshipIds()
+      .then(res => setSavedIds(new Set(res.data.ids)))
+      .catch(() => {});
+  }, []);
+
+  const handleToggleSave = async (e, scholarshipId) => {
+    e.stopPropagation();
+    const isSaved = savedIds.has(scholarshipId);
+    try {
+      if (isSaved) {
+        await unsaveScholarship(scholarshipId);
+        setSavedIds(prev => { const next = new Set(prev); next.delete(scholarshipId); return next; });
+      } else {
+        await saveScholarship(scholarshipId);
+        setSavedIds(prev => new Set(prev).add(scholarshipId));
+        toast.success("Saved to your list");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update saved scholarships.");
+    }
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -136,18 +168,6 @@ export default function AllScholarships() {
       <header style={{ background: "var(--color-surface)", borderBottom: "1px solid var(--color-border)", padding: "16px 24px" }}>
         <div style={{ maxWidth: "1400px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <button
-              onClick={() => navigate("/dashboard")}
-              style={{ background: "none", border: "none", color: "#F5C842", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}
-            >
-              ← Dashboard
-            </button>
-            <button
-              onClick={() => navigate("/applications")}
-              style={{ background: "none", border: "none", color: "#38BDF8", fontSize: "15px", fontWeight: "600", cursor: "pointer" }}
-            >
-              My Applications 📝
-            </button>
             <h1 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "var(--color-text)" }}>
               Explore All Scholarships
             </h1>
@@ -256,6 +276,13 @@ export default function AllScholarships() {
               const isApplied = applications.some(a => a.scholarship_id === s.id);
               const deadlineDate = new Date(s.deadline);
               const diffDays = Math.ceil((deadlineDate - new Date()) / (1000 * 60 * 60 * 24));
+              const { eligible, reasons } = checkEligibility(s, student);
+              const levelMismatch = student && s.level !== "All Levels" && s.level !== student.level;
+              const fieldMismatch = student && s.field !== "All Fields" && s.field !== student.field;
+              const countryMismatch = student && s.country !== "Global" && s.country !== "Other" && s.country !== student.country;
+              const mismatchPillStyle = { background: "rgba(239, 68, 68, 0.12)", color: "#EF4444", border: "1px solid rgba(239, 68, 68, 0.3)" };
+
+              const isSaved = savedIds.has(s.id);
 
               return (
                 <div
@@ -267,11 +294,34 @@ export default function AllScholarships() {
                     padding: "24px",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "space-between"
+                    justifyContent: "space-between",
+                    position: "relative"
                   }}
                 >
+                  <button
+                    onClick={(e) => handleToggleSave(e, s.id)}
+                    title={isSaved ? "Remove from saved" : "Save this scholarship"}
+                    aria-label={isSaved ? "Remove from saved" : "Save this scholarship"}
+                    style={{
+                      position: "absolute",
+                      top: "16px",
+                      right: "16px",
+                      width: "32px",
+                      height: "32px",
+                      display: "grid",
+                      placeItems: "center",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "15px",
+                      border: isSaved ? "1px solid rgba(245, 200, 66, 0.4)" : "1px solid var(--color-border)",
+                      background: isSaved ? "rgba(245, 200, 66, 0.15)" : "var(--color-bg)",
+                    }}
+                  >
+                    {isSaved ? "🔖" : "🏷️"}
+                  </button>
+
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", paddingRight: "40px" }}>
                       <span
                         onClick={(e) => {
                           e.stopPropagation();
@@ -308,10 +358,15 @@ export default function AllScholarships() {
                     </p>
 
                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
-                      <span style={{ background: "var(--color-pill-bg)", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", color: "var(--color-text-dim)" }}>{s.level}</span>
-                      <span style={{ background: "var(--color-pill-bg)", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", color: "var(--color-text-dim)" }}>{s.field}</span>
-                      <span style={{ background: "var(--color-pill-bg)", padding: "3px 8px", borderRadius: "4px", fontSize: "11px", color: "var(--color-text-dim)" }}>{s.country}</span>
+                      <span style={{ padding: "3px 8px", borderRadius: "4px", fontSize: "11px", ...(levelMismatch ? mismatchPillStyle : { background: "var(--color-pill-bg)", color: "var(--color-text-dim)" }) }}>{s.level}</span>
+                      <span style={{ padding: "3px 8px", borderRadius: "4px", fontSize: "11px", ...(fieldMismatch ? mismatchPillStyle : { background: "var(--color-pill-bg)", color: "var(--color-text-dim)" }) }}>{s.field}</span>
+                      <span style={{ padding: "3px 8px", borderRadius: "4px", fontSize: "11px", ...(countryMismatch ? mismatchPillStyle : { background: "var(--color-pill-bg)", color: "var(--color-text-dim)" }) }}>{s.country}</span>
                     </div>
+                    {!eligible && (
+                      <p style={{ color: "#EF4444", fontSize: "11.5px", lineHeight: "1.4", marginBottom: "16px", marginTop: "-8px" }}>
+                        ⚠ You don't meet all requirements for this scholarship.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -334,6 +389,14 @@ export default function AllScholarships() {
                       ) : diffDays <= 0 ? (
                         <button disabled style={{ flex: 1, background: "var(--color-border)", color: "var(--color-text-muted)", border: "none", borderRadius: "8px", padding: "8px", fontSize: "13px", fontWeight: "600", cursor: "not-allowed" }}>
                           Closed
+                        </button>
+                      ) : !eligible ? (
+                        <button
+                          disabled
+                          title={reasons.join(" · ")}
+                          style={{ flex: 1, background: "rgba(239, 68, 68, 0.12)", color: "#EF4444", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "8px", padding: "8px", fontSize: "13px", fontWeight: "600", cursor: "not-allowed" }}
+                        >
+                          Not Eligible
                         </button>
                       ) : (
                         <button

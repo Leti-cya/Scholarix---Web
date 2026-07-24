@@ -21,6 +21,16 @@
   --pd-green: #10B981;
   --pd-red: #EF4444;
   --pd-amber: #F59E0B;
+
+  /* Chart status colours — match the .status-badge hues exactly so a chart
+     bar and its corresponding badge are always the same colour. Validated
+     as a categorical set against this page's light/dark surfaces. */
+  --chart-submitted:     #3B82F6;
+  --chart-under-review:  #F59E0B;
+  --chart-shortlisted:   #A855F7;
+  --chart-approved:      #10B981;
+  --chart-rejected:      #EF4444;
+  --chart-sequential:    #2563EB;
 }
 
 /*
@@ -37,6 +47,10 @@
   --pd-text-main: #F1F5F9;
   --pd-text-dim: #CBD5E1;
   --pd-text-muted: #94A3B8;
+
+  /* Stepped darker for the dark surface — same hues, validated lightness band */
+  --chart-under-review: #D97706;
+  --chart-approved:     #059669;
   --pd-subtle-bg: rgba(255, 255, 255, 0.02);
   --pd-subtle-border: rgba(255, 255, 255, 0.05);
   --pd-subtle-hover: rgba(255, 255, 255, 0.05);

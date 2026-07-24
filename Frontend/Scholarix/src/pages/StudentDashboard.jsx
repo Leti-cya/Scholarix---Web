@@ -394,12 +394,6 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
   const [resendingVerify, setResendingVerify] = useState(false);
   const handleResendVerification = async () => {
     try {
@@ -459,15 +453,6 @@ export default function StudentDashboard() {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <ThemeToggle />
           <NotificationBell />
-          <button className="sd-btn-outline" style={{ border: '1px solid #38BDF8', color: '#38BDF8' }} onClick={() => navigate('/applications')}>
-            My Applications 📝
-          </button>
-          <button className="sd-btn-outline" style={{ border: '1px solid #F5C842', color: '#F5C842' }} onClick={() => navigate('/scholarships')}>
-            Explore All Scholarships 🔍
-          </button>
-          <button className="sd-btn-outline" style={{ border: '1px solid #EF4444', color: '#EF4444' }} onClick={handleLogout} aria-label="Sign out">
-            Sign Out
-          </button>
         </div>
       </header>
 

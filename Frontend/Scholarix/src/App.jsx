@@ -15,7 +15,27 @@ import AllScholarships from './pages/AllScholarships'
 import ProviderProfile from './pages/ProviderProfile'
 import StudentApplications from './pages/StudentApplications'
 import ProviderApplications from './pages/ProviderApplications'
+import StudentAnalytics from './pages/StudentAnalytics'
+import ProviderAnalytics from './pages/ProviderAnalytics'
+import SavedScholarships from './pages/SavedScholarships'
+import StudentDocuments from './pages/StudentDocuments'
 import ProtectedRoute from './service/ProtectedRoute'
+import Layout from './component/Layout'
+
+const STUDENT_NAV = [
+  { to: "/dashboard", icon: "🏠", label: "Dashboard", end: true },
+  { to: "/scholarships", icon: "🔍", label: "Explore Scholarships" },
+  { to: "/saved", icon: "🔖", label: "Saved" },
+  { to: "/applications", icon: "📝", label: "My Applications" },
+  { to: "/documents", icon: "📎", label: "Documents" },
+  { to: "/analytics", icon: "📊", label: "Analytics" },
+];
+
+const PROVIDER_NAV = [
+  { to: "/provider/dashboard", icon: "🏠", label: "Dashboard", end: true },
+  { to: "/provider/applications", icon: "📋", label: "Manage Applications" },
+  { to: "/provider/analytics", icon: "📊", label: "Analytics" },
+];
 
 function App() {
   return (
@@ -32,18 +52,26 @@ function App() {
           <Route path = "/verify-email" element = {<VerifyEmail />} />
           <Route path = "/providers/:id" element = {<ProviderProfile />} />
 
-          {/* Protected Student Routes */}
+          {/* Protected Student Routes — share the nav drawer shell */}
           <Route element={<ProtectedRoute allowedRoles={['student']} />}>
-            <Route path = "/dashboard" element = {<StudentDashboard />} />
-            <Route path = "/scholarships" element = {<AllScholarships />} />
-            <Route path = "/scholarships/:id" element = {<ScholarshipDetails />} />
-            <Route path = "/applications" element = {<StudentApplications />} />
+            <Route element={<Layout navItems={STUDENT_NAV} homeHref="/dashboard" />}>
+              <Route path = "/dashboard" element = {<StudentDashboard />} />
+              <Route path = "/scholarships" element = {<AllScholarships />} />
+              <Route path = "/scholarships/:id" element = {<ScholarshipDetails />} />
+              <Route path = "/saved" element = {<SavedScholarships />} />
+              <Route path = "/applications" element = {<StudentApplications />} />
+              <Route path = "/documents" element = {<StudentDocuments />} />
+              <Route path = "/analytics" element = {<StudentAnalytics />} />
+            </Route>
           </Route>
 
-          {/* Protected Provider Routes */}
+          {/* Protected Provider Routes — share the nav drawer shell */}
           <Route element={<ProtectedRoute allowedRoles={['provider']} />}>
-            <Route path = "/provider/dashboard" element = {<ProviderDashboard />} />
-            <Route path = "/provider/applications" element = {<ProviderApplications />} />
+            <Route element={<Layout navItems={PROVIDER_NAV} homeHref="/provider/dashboard" />}>
+              <Route path = "/provider/dashboard" element = {<ProviderDashboard />} />
+              <Route path = "/provider/applications" element = {<ProviderApplications />} />
+              <Route path = "/provider/analytics" element = {<ProviderAnalytics />} />
+            </Route>
           </Route>
 
           {/* Fallback 404 Route */}

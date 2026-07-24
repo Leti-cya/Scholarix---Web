@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import "./ProviderDashboard.css";
 import Api from "../service/Api";
 import ThemeToggle from "../component/ThemeToggle";
+import ApplicantDocuments from "../component/ApplicantDocuments";
 
 export default function ProviderApplications() {
   const navigate = useNavigate();
@@ -79,12 +80,6 @@ export default function ProviderApplications() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
   // Metrics
   const activeCount = scholarships.length;
   const totalAppsCount = applications.length;
@@ -137,13 +132,6 @@ export default function ProviderApplications() {
       {/* ── HEADER BANNER ────────────────────────────────────────────── */}
       <header className="pd-welcome-banner">
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <button
-            onClick={() => navigate("/provider/dashboard")}
-            className="pd-btn pd-btn-outline"
-            style={{ borderColor: "#F5C842", color: "#F5C842", padding: "8px 14px" }}
-          >
-            ← Dashboard
-          </button>
           <div>
             <h1 className="pd-welcome-heading" style={{ fontSize: "24px" }}>
               Application Management
@@ -155,9 +143,6 @@ export default function ProviderApplications() {
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <ThemeToggle />
-          <button className="pd-btn pd-btn-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={handleLogout}>
-            Sign Out
-          </button>
         </div>
       </header>
 
@@ -426,6 +411,14 @@ export default function ProviderApplications() {
                     {applicantModal.applicant.essay || "No essay statement provided."}
                   </p>
                 </div>
+              </div>
+
+              {/* Supporting Documents */}
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#F5C842", margin: "0 0 8px 0" }}>
+                  Supporting Documents
+                </h4>
+                <ApplicantDocuments studentId={applicantModal.applicant.student_id} />
               </div>
 
               {/* Application Status Action Controls */}

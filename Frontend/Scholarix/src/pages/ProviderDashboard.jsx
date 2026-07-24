@@ -5,6 +5,7 @@ import "./ProviderDashboard.css";
 import Api, { resendVerification } from "../service/Api";
 import NotificationBell from "../component/NotificationBell";
 import ThemeToggle from "../component/ThemeToggle";
+import ApplicantDocuments from "../component/ApplicantDocuments";
 
 export default function ProviderDashboard() {
   const navigate = useNavigate();
@@ -275,12 +276,6 @@ export default function ProviderDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    toast.success("Logged out successfully");
-    navigate("/login");
-  };
-
   // Metrics
   const activeCount = scholarships.length;
   const totalAppsCount = applications.length;
@@ -350,18 +345,8 @@ export default function ProviderDashboard() {
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
           <ThemeToggle />
           <NotificationBell />
-          <button
-            className="pd-btn pd-btn-outline"
-            style={{ borderColor: '#38BDF8', color: '#38BDF8' }}
-            onClick={() => navigate('/provider/applications')}
-          >
-            Manage Applications 📋
-          </button>
           <button className="pd-btn pd-btn-outline" style={{ borderColor: '#F5C842', color: '#F5C842' }} onClick={handleOpenEditOrgProfile}>
             ✏️ Edit Org Profile
-          </button>
-          <button className="pd-btn pd-btn-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={handleLogout}>
-            Sign Out
           </button>
         </div>
       </header>
@@ -1133,6 +1118,14 @@ export default function ProviderDashboard() {
                     {applicantModal.applicant.essay || "No essay statement provided."}
                   </p>
                 </div>
+              </div>
+
+              {/* Supporting Documents */}
+              <div>
+                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#F5C842", margin: "0 0 8px 0" }}>
+                  Supporting Documents
+                </h4>
+                <ApplicantDocuments studentId={applicantModal.applicant.student_id} />
               </div>
 
               {/* Application Status Action Controls */}

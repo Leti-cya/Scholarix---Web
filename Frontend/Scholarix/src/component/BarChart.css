@@ -1,0 +1,130 @@
+/* BarChart.css — scoped "bc-" prefix. Chrome (text/gridlines/tooltip) uses
+   the global --surf-* tokens (index.css) so this component works unchanged
+   on both student (--color-*) and provider (--pd-*) pages; bar fill colors
+   are supplied per-item by the caller via inline style. */
+
+.bc-root {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.bc-empty {
+  display: grid;
+  place-items: center;
+}
+
+.bc-empty p {
+  color: var(--surf-text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.bc-gridlines {
+  position: absolute;
+  inset: 0 0 28px 0; /* leave room for the x-axis label row below */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.bc-gridline {
+  height: 1px;
+  background: var(--surf-border);
+  opacity: 0.7;
+}
+
+.bc-bars {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding-bottom: 28px; /* x-axis label row */
+}
+
+.bc-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  position: relative;
+  border-radius: 6px;
+  outline: none;
+}
+
+.bc-col:focus-visible {
+  box-shadow: 0 0 0 2px var(--surf-accent-blue);
+}
+
+.bc-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--surf-text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.bc-track {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bc-bar {
+  width: 100%;
+  max-width: 32px;
+  border-radius: 4px 4px 0 0;
+  transition: opacity 140ms ease, height 240ms ease;
+}
+
+.bc-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 0.72rem;
+  color: var(--surf-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+}
+
+.bc-tooltip {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  background: var(--surf-card);
+  border: 1px solid var(--surf-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.bc-tooltip strong {
+  font-size: 0.85rem;
+  color: var(--surf-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bc-tooltip span {
+  font-size: 0.7rem;
+  color: var(--surf-text-muted);
+}

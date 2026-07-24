@@ -40,7 +40,6 @@ CREATE TABLE IF NOT EXISTS users (
 
 SELECT * FROM users;
 
-
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
@@ -86,6 +85,24 @@ CREATE TABLE IF NOT EXISTS applications (
 );
 
 SELECT * FROM applications;
+
+
+-- Documents Table (Student-uploaded supporting documents — transcripts,
+-- recommendation letters, certificates, etc. Reusable across applications;
+-- providers can view a student's documents once that student has applied
+-- to one of their scholarships.)
+CREATE TABLE IF NOT EXISTS documents (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    doc_type VARCHAR(50) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    stored_filename VARCHAR(255) NOT NULL UNIQUE,
+    file_size INT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_user ON documents(user_id);
 
 
 -- Saved Scholarships Table (Student bookmarking scholarships)

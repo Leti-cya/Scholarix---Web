@@ -212,7 +212,7 @@ const updateUserProfile = async (id, role, data) => {
 
 const findUserById = async (id) => {
     const result = await pool.query(
-        "SELECT id, role, email, org_name, org_type, website, contact_name, contact_title, description, created_at FROM users WHERE id = $1",
+        "SELECT id, role, email, first_name, last_name, org_name, org_type, website, contact_name, contact_title, description, created_at FROM users WHERE id = $1",
         [id]
     );
     return result.rows[0];

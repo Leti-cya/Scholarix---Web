@@ -96,4 +96,61 @@ export const getProviderPublicProfile = (id) => {
     return Api.get(`/api/auth/provider/${id}`);
 };
 
+// ─── Saved scholarships ─────────────────────────────────────
+export const saveScholarship = (scholarshipId) => {
+    return Api.post(`/api/saved-scholarships/${scholarshipId}`);
+};
+
+export const unsaveScholarship = (scholarshipId) => {
+    return Api.delete(`/api/saved-scholarships/${scholarshipId}`);
+};
+
+export const getSavedScholarships = () => {
+    return Api.get("/api/saved-scholarships");
+};
+
+export const getSavedScholarshipIds = () => {
+    return Api.get("/api/saved-scholarships/ids");
+};
+
+// ─── Documents ──────────────────────────────────────────────
+export const uploadDocument = (file, docType) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("docType", docType);
+    return Api.post("/api/documents", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+};
+
+export const getMyDocuments = () => {
+    return Api.get("/api/documents");
+};
+
+export const deleteDocument = (id) => {
+    return Api.delete(`/api/documents/${id}`);
+};
+
+// Download requires the Authorization header, so it can't be a plain <a href>
+// link — fetch as a blob (the auth interceptor attaches the token) and hand
+// back the blob + filename for the caller to trigger a save-as.
+export const downloadDocument = async (id, fallbackFilename) => {
+    const res = await Api.get(`/api/documents/${id}/download`, { responseType: "blob" });
+    const disposition = res.headers["content-disposition"] || "";
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : fallbackFilename || "document";
+    const url = window.URL.createObjectURL(res.data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+};
+
+export const getStudentDocumentsForProvider = (studentId) => {
+    return Api.get(`/api/documents/student/${studentId}`);
+};
+
 export default Api;

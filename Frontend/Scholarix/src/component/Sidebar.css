@@ -1,0 +1,191 @@
+/* Sidebar.css — scoped "sbx-" prefix. Uses the global --surf-* tokens
+   (index.css) so it renders correctly regardless of which page-specific
+   stylesheet (--color-*, --pd-*, etc.) is also loaded underneath it. */
+
+/* ── Hamburger trigger — fixed top-left on every page ── */
+.sbx-hamburger {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 300;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--surf-card);
+  border: 1px solid var(--surf-border);
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.sbx-hamburger:hover {
+  background: var(--surf-card-2);
+}
+
+.sbx-hamburger:focus-visible {
+  outline: 3px solid var(--surf-accent-gold);
+  outline-offset: 2px;
+}
+
+.sbx-hamburger__bar {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--surf-text);
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+/* Morph into an X when open */
+.sbx-hamburger--open .sbx-hamburger__bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.sbx-hamburger--open .sbx-hamburger__bar:nth-child(2) {
+  opacity: 0;
+}
+.sbx-hamburger--open .sbx-hamburger__bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Backdrop ── */
+.sbx-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 250;
+  animation: sbx-fade 160ms ease;
+}
+
+@keyframes sbx-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Drawer ── */
+.sbx-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 240px;
+  max-width: 82vw;
+  background: var(--surf-card);
+  border-right: 1px solid var(--surf-border);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px;
+  z-index: 260;
+  overflow-y: auto;
+  box-sizing: border-box;
+  transform: translateX(-100%);
+  transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+}
+
+.sbx-root--open {
+  transform: translateX(0);
+}
+
+.sbx-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  padding: 44px 6px 0;
+  margin-bottom: 28px;
+}
+
+.sbx-logo__mark {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: var(--surf-accent-gold);
+  color: #0D1B2A;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.sbx-logo__text {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--surf-text);
+}
+
+.sbx-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sbx-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  text-decoration: none;
+  color: var(--surf-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 140ms ease, color 140ms ease;
+  border-left: 3px solid transparent;
+}
+
+.sbx-link:hover {
+  background: var(--surf-card-2);
+  color: var(--surf-text);
+}
+
+.sbx-link--active {
+  background: color-mix(in srgb, var(--surf-accent-gold) 14%, transparent);
+  color: var(--surf-text);
+  border-left-color: var(--surf-accent-gold);
+}
+
+.sbx-link__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.sbx-link__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sbx-signout {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #EF4444;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.sbx-signout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}

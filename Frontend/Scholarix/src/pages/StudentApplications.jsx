@@ -108,20 +108,10 @@ export default function StudentApplications() {
       <header className="sa-header">
         <div className="sa-header-inner">
           <div className="sa-nav-left">
-            <button className="sa-back-btn" onClick={() => navigate("/dashboard")}>
-              ← Dashboard
-            </button>
             <h1 className="sa-title">My Applications</h1>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <ThemeToggle />
-            <button
-              className="sa-btn-primary"
-              style={{ padding: "8px 16px", fontSize: "13px" }}
-              onClick={() => navigate("/scholarships")}
-            >
-              Explore Scholarships 🔍
-            </button>
           </div>
         </div>
       </header>
