@@ -3,7 +3,7 @@
 -- Users table (Handles both Student and Provider roles)
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'provider')),
+    role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'provider', 'admin')),
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     
@@ -30,6 +30,10 @@ CREATE TABLE IF NOT EXISTS users (
     is_verified BOOLEAN DEFAULT false,
     verification_token VARCHAR(255),
     verification_expires TIMESTAMP,
+
+    -- Admin moderation — blocks login when true (Backend/scripts/migrateAdmin.js
+    -- applies this to existing databases via ALTER TABLE)
+    is_suspended BOOLEAN DEFAULT false,
 
     -- Forgot-password flow (separate tokens from email verification)
     password_reset_token VARCHAR(255),

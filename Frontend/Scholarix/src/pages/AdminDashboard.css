@@ -1,0 +1,190 @@
+/* Admin pages — layered on top of the --pd-* tokens from ProviderDashboard.css
+   (imported alongside this file) so the shell, cards, buttons, and modals
+   look identical to the rest of the logged-in app. Only table/toolbar/badge
+   styles that don't already exist are added here. */
+
+.ad-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ad-search-input {
+  flex: 1;
+  min-width: 220px;
+  background: var(--pd-input-bg);
+  border: 1px solid var(--pd-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--pd-text-main);
+  font-size: 14px;
+}
+
+.ad-search-input:focus {
+  border-color: var(--pd-teal);
+  outline: none;
+}
+
+.ad-filter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ad-table-wrap {
+  overflow-x: auto;
+}
+
+.ad-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.ad-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pd-text-muted);
+  border-bottom: 1px solid var(--pd-border);
+  white-space: nowrap;
+}
+
+.ad-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--pd-border);
+  color: var(--pd-text-dim);
+  vertical-align: middle;
+}
+
+.ad-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ad-table tbody tr:hover td {
+  background: var(--pd-subtle-hover);
+}
+
+/* Qualified under .ad-table so these beat the ".ad-table td" base rule above
+   (a lone class selector is otherwise weaker than an element+class one). */
+.ad-table .ad-cell-primary {
+  color: var(--pd-text-main);
+  font-weight: 600;
+}
+
+.ad-table .ad-cell-muted {
+  color: var(--pd-text-muted);
+  font-size: 12.5px;
+}
+
+/* Flat, theme-independent badges — same convention as .status-badge in
+   ProviderDashboard.css, so they read identically in light and dark. */
+.ad-role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.ad-role-badge.student { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+.ad-role-badge.provider { background: rgba(168, 85, 247, 0.15); color: #A855F7; }
+.ad-role-badge.admin { background: rgba(245, 200, 66, 0.22); color: #B4890A; }
+
+.ad-status-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ad-status-dot::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.ad-status-dot.active { color: #10B981; }
+.ad-status-dot.suspended { color: #EF4444; }
+.ad-status-dot.unverified { color: #F59E0B; }
+
+.ad-table-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.ad-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--pd-text-muted);
+  font-size: 14px;
+}
+
+.ad-activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ad-activity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--pd-border);
+  font-size: 13px;
+}
+
+.ad-activity-item:last-child {
+  border-bottom: none;
+}
+
+.ad-activity-main {
+  color: var(--pd-text-main);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ad-activity-sub {
+  color: var(--pd-text-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.ad-activity-date {
+  color: var(--pd-text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ad-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .ad-two-col {
+    grid-template-columns: 1fr;
+  }
+}

@@ -163,6 +163,12 @@ const login = async (req, res) => {
             })
         }
 
+        if (user.is_suspended) {
+            return res.status(403).json({
+                message: "Your account has been suspended. Contact support for assistance."
+            })
+        }
+
         const { password: _, ...safeUser } = user
 
         const token = JWT.sign(

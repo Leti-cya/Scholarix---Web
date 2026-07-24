@@ -418,8 +418,8 @@ function LoginForm({ role, onSuccess }) {
  * Temporary dev-only screen. In production: useNavigate() replaces this.
  */
 function SuccessScreen({ role }) {
-  const destination = role === "provider" ? "/provider/dashboard" : "/dashboard";
-  const label       = role === "provider" ? "Provider Dashboard" : "Student Dashboard";
+  const destination = role === "provider" ? "/provider/dashboard" : role === "admin" ? "/admin/dashboard" : "/dashboard";
+  const label       = role === "provider" ? "Provider Dashboard" : role === "admin" ? "Admin Dashboard" : "Student Dashboard";
 
   return (
     <div className="auth-form-panel auth-form-panel--centered">
@@ -451,14 +451,21 @@ function SuccessScreen({ role }) {
 export default function Login() {
   const [role, setRole]       = useState("student");
   const [success, setSuccess] = useState(false);
+  // The server's actual returned role — may differ from the selected tab
+  // above (e.g. an admin account signing in), so the success screen and
+  // redirect must key off this, not the tab.
+  const [loggedInRole, setLoggedInRole] = useState(null);
 
   const navigate = useNavigate();
 
-  function handleSuccess(loggedInRole) {
+  function handleSuccess(actualRole) {
+    setLoggedInRole(actualRole);
     setSuccess(true);
     setTimeout(() => {
-      if (loggedInRole === "provider") {
+      if (actualRole === "provider") {
         navigate("/provider/dashboard");
+      } else if (actualRole === "admin") {
+        navigate("/admin/dashboard");
       } else {
         navigate("/dashboard");
       }
@@ -476,7 +483,7 @@ export default function Login() {
       <main className="auth-right" aria-label="Sign in to Scholarix">
 
         {success ? (
-          <SuccessScreen role={role} />
+          <SuccessScreen role={loggedInRole} />
         ) : (
           <div className="auth-form-panel">
 

@@ -19,6 +19,10 @@ import StudentAnalytics from './pages/StudentAnalytics'
 import ProviderAnalytics from './pages/ProviderAnalytics'
 import SavedScholarships from './pages/SavedScholarships'
 import StudentDocuments from './pages/StudentDocuments'
+import AdminLogin from './pages/AdminLogin'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminUsers from './pages/AdminUsers'
+import AdminScholarships from './pages/AdminScholarships'
 import ProtectedRoute from './service/ProtectedRoute'
 import Layout from './component/Layout'
 
@@ -37,6 +41,12 @@ const PROVIDER_NAV = [
   { to: "/provider/analytics", icon: "📊", label: "Analytics" },
 ];
 
+const ADMIN_NAV = [
+  { to: "/admin/dashboard", icon: "🏠", label: "Overview", end: true },
+  { to: "/admin/users", icon: "👥", label: "Users" },
+  { to: "/admin/scholarships", icon: "🎓", label: "Scholarships" },
+];
+
 function App() {
   return (
     <>
@@ -51,6 +61,7 @@ function App() {
           <Route path = "/reset-password" element = {<ResetPassword />} />
           <Route path = "/verify-email" element = {<VerifyEmail />} />
           <Route path = "/providers/:id" element = {<ProviderProfile />} />
+          <Route path = "/admin/login" element = {<AdminLogin />} />
 
           {/* Protected Student Routes — share the nav drawer shell */}
           <Route element={<ProtectedRoute allowedRoles={['student']} />}>
@@ -71,6 +82,15 @@ function App() {
               <Route path = "/provider/dashboard" element = {<ProviderDashboard />} />
               <Route path = "/provider/applications" element = {<ProviderApplications />} />
               <Route path = "/provider/analytics" element = {<ProviderAnalytics />} />
+            </Route>
+          </Route>
+
+          {/* Protected Admin Routes — share the nav drawer shell */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} loginPath="/admin/login" />}>
+            <Route element={<Layout navItems={ADMIN_NAV} homeHref="/admin/dashboard" />}>
+              <Route path = "/admin/dashboard" element = {<AdminDashboard />} />
+              <Route path = "/admin/users" element = {<AdminUsers />} />
+              <Route path = "/admin/scholarships" element = {<AdminScholarships />} />
             </Route>
           </Route>
 

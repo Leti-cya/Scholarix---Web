@@ -153,4 +153,45 @@ export const getStudentDocumentsForProvider = (studentId) => {
     return Api.get(`/api/documents/student/${studentId}`);
 };
 
+// ─── Admin ──────────────────────────────────────────────────
+export const getAdminStats = () => {
+    return Api.get("/api/admin/stats");
+};
+
+export const getAdminGrowth = () => {
+    return Api.get("/api/admin/growth");
+};
+
+export const getAdminApplicationStatus = () => {
+    return Api.get("/api/admin/application-status");
+};
+
+export const getAdminActivity = () => {
+    return Api.get("/api/admin/activity");
+};
+
+export const getAdminUsers = (params = {}) => {
+    return Api.get("/api/admin/users", { params });
+};
+
+export const getAdminUserDetail = (id) => {
+    return Api.get(`/api/admin/users/${id}`);
+};
+
+export const suspendAdminUser = (id, suspended) => {
+    return Api.patch(`/api/admin/users/${id}/suspend`, { suspended });
+};
+
+export const deleteAdminUser = (id) => {
+    return Api.delete(`/api/admin/users/${id}`);
+};
+
+export const getAdminScholarships = (params = {}) => {
+    return Api.get("/api/admin/scholarships", { params });
+};
+
+export const deleteAdminScholarship = (id) => {
+    return Api.delete(`/api/admin/scholarships/${id}`);
+};
+
 export default Api;

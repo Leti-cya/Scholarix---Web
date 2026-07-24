@@ -9,6 +9,7 @@ const applicationRoutes = require("./route/applicationRoute");
 const notificationRoutes = require("./route/notificationRoute");
 const documentRoutes = require("./route/documentRoute");
 const savedScholarshipRoutes = require("./route/savedScholarshipRoute");
+const adminRoutes = require("./route/adminRoute");
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/saved-scholarships", savedScholarshipRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 8000;
 
