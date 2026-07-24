@@ -26,6 +26,7 @@
 
 import React, { useState, useEffect } from "react";
 import "./LandingPage.css";
+import ThemeToggle from "../component/ThemeToggle";
 
 // ─────────────────────────────────────────────────────────
 // MOCK DATA
@@ -324,6 +325,7 @@ function Navbar() {
 
         {/* Desktop CTA buttons */}
         <div className="lp-nav__actions">
+          <ThemeToggle />
           <a href="/login" className="lp-btn lp-btn--ghost">Sign in</a>
           <a href="/register" className="lp-btn lp-btn--primary">Get started free</a>
         </div>
@@ -352,6 +354,7 @@ function Navbar() {
             <li><a href="#faq" onClick={handleNavLink} className="lp-nav__mobile-link">FAQ</a></li>
           </ul>
           <div className="lp-nav__mobile-actions">
+            <ThemeToggle style={{ alignSelf: "center", marginBottom: "4px" }} />
             <a href="/login" className="lp-btn lp-btn--ghost lp-btn--full" onClick={handleNavLink}>Sign in</a>
             <a href="/register" className="lp-btn lp-btn--primary lp-btn--full" onClick={handleNavLink}>Get started free</a>
           </div>

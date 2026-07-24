@@ -91,6 +91,32 @@
   --auth-transition: 180ms ease;
 }
 
+/*
+ * Dark theme override.
+ * The navy left panel is a fixed brand element and stays the
+ * same in both themes. Only the white right-hand form panel
+ * (surfaces, borders, text, and tinted backgrounds) flips.
+ */
+:root[data-theme="dark"] {
+  --auth-bg:           #0F172A;
+  --auth-surface:      #1E293B;
+  --auth-border:       #334155;
+  --auth-border-dark:  #475569;
+  --auth-text:         #F1F5F9;
+  --auth-text-muted:   #94A3B8;
+  --auth-text-faint:   #64748B;
+
+  --auth-blue-light:   rgba(29, 78, 216, 0.16);
+  --auth-blue-border:  rgba(59, 130, 246, 0.35);
+  --auth-gold-pale:    rgba(245, 200, 66, 0.14);
+  --auth-green-light:  rgba(5, 150, 105, 0.16);
+  --auth-red-light:    rgba(220, 38, 38, 0.16);
+
+  --auth-shadow-sm:  0 1px 4px rgba(0,0,0,.35);
+  --auth-shadow:     0 4px 16px rgba(0,0,0,.4);
+  --auth-shadow-md:  0 8px 32px rgba(0,0,0,.5);
+}
+
 
 /* ═══════════════════════════════════════════════════════
    2. RESET & BASE
@@ -442,7 +468,7 @@
   font-family: var(--auth-font-display);
   font-size: 1.75rem;
   font-weight: 800;
-  color: var(--auth-navy);
+  color: var(--auth-text);
   line-height: 1.15;
   margin-bottom: 8px;
 }
@@ -628,7 +654,7 @@
 
 /* Highlighted email address in body text */
 .auth-highlight {
-  color: var(--auth-navy);
+  color: var(--auth-text);
   font-weight: 700;
 }
 
@@ -729,7 +755,7 @@
 /* Outline — bordered, transparent */
 .auth-btn--outline {
   background: transparent;
-  color: var(--auth-navy);
+  color: var(--auth-text);
   border-color: var(--auth-border-dark);
 }
 
@@ -917,7 +943,7 @@
   font-family: var(--auth-font-display);
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--auth-navy);
+  color: var(--auth-text);
 }
 
 .auth-role-card__desc {
@@ -1085,7 +1111,7 @@
  * Bold + navy makes it easy to spot at a glance.
  */
 .fp-email-highlight {
-  color: var(--auth-navy);
+  color: var(--auth-text);
   font-weight: 700;
   word-break: break-all; /* prevents long emails from overflowing */
 }
@@ -1432,7 +1458,7 @@
 /* Active tab: white card with subtle shadow */
 .login-tab--active {
   background: var(--auth-surface);
-  color: var(--auth-navy);
+  color: var(--auth-text);
   box-shadow: var(--auth-shadow-sm);
 }
 
@@ -1574,4 +1600,26 @@
     font-size: 0.8rem;
     padding: 9px 10px;
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   21. SINGLE-PANEL VARIANT
+   Used by pages with no left brand panel (VerifyEmail,
+   ResetPassword) — a lone .auth-right centered card.
+   .auth-root's base layout is a 2-column grid sized for a
+   left+right pair; with only one child, grid auto-placement
+   drops it into the narrow first (left) track. This variant
+   switches to flex so the single panel spans and centers
+   across the full viewport instead. Placed last so it wins
+   over the grid rules above, including inside the responsive
+   breakpoints.
+═══════════════════════════════════════════════════════ */
+.auth-root--single {
+  display: flex;
+  min-height: 100vh;
+}
+
+.auth-root--single .auth-right {
+  width: 100%;
+  align-items: center;
 }

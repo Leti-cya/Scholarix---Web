@@ -33,14 +33,19 @@ const createUser = async (data) => {
             contact_name,
             contact_title,
             reg_number,
-            description
+            description,
+
+            is_verified,
+            verification_token,
+            verification_expires
         )
         VALUES (
             $1,$2,$3,
             $4,$5,$6,$7,
             $8,$9,$10,$11,
             $12,$13,$14,
-            $15,$16,$17,$18
+            $15,$16,$17,$18,
+            $19,$20,$21
         )
         RETURNING *`,
         [
@@ -65,10 +70,52 @@ const createUser = async (data) => {
             data.contactName,
             data.contactTitle,
             data.regNumber,
-            data.description
+            data.description,
+
+            false,
+            data.verificationToken || null,
+            data.verificationExpires || null
         ]
     )
 
+    return result.rows[0]
+}
+
+// Look up a user by their (unexpired) email-verification token.
+const findUserByVerificationToken = async (token) => {
+    const result = await pool.query(
+        `SELECT * FROM users
+         WHERE verification_token = $1
+           AND verification_expires > NOW()`,
+        [token]
+    )
+    return result.rows[0]
+}
+
+// Mark a user verified and clear their verification token.
+const markUserVerified = async (id) => {
+    const result = await pool.query(
+        `UPDATE users
+         SET is_verified = true,
+             verification_token = NULL,
+             verification_expires = NULL
+         WHERE id = $1
+         RETURNING id, email, role, is_verified`,
+        [id]
+    )
+    return result.rows[0]
+}
+
+// Store a freshly generated verification token (used for "resend").
+const setVerificationToken = async (id, token, expires) => {
+    const result = await pool.query(
+        `UPDATE users
+         SET verification_token = $1,
+             verification_expires = $2
+         WHERE id = $3
+         RETURNING id, email`,
+        [token, expires, id]
+    )
     return result.rows[0]
 }
 
@@ -76,6 +123,44 @@ const updateUserPassword = async (email, hashedPassword) => {
     const result = await pool.query(
         "UPDATE users SET password = $1 WHERE email = $2 RETURNING id, email, role",
         [hashedPassword, email]
+    );
+    return result.rows[0];
+};
+
+// Store a freshly generated password-reset token for the "forgot password" flow.
+const setPasswordResetToken = async (email, token, expires) => {
+    const result = await pool.query(
+        `UPDATE users
+         SET password_reset_token = $1,
+             password_reset_expires = $2
+         WHERE email = $3
+         RETURNING id, email`,
+        [token, expires, email]
+    );
+    return result.rows[0];
+};
+
+// Look up a user by their (unexpired) password-reset token.
+const findUserByResetToken = async (token) => {
+    const result = await pool.query(
+        `SELECT * FROM users
+         WHERE password_reset_token = $1
+           AND password_reset_expires > NOW()`,
+        [token]
+    );
+    return result.rows[0];
+};
+
+// Sets the new (already-hashed) password and clears the reset token.
+const resetPasswordWithToken = async (id, hashedPassword) => {
+    const result = await pool.query(
+        `UPDATE users
+         SET password = $1,
+             password_reset_token = NULL,
+             password_reset_expires = NULL
+         WHERE id = $2
+         RETURNING id, email, role`,
+        [hashedPassword, id]
     );
     return result.rows[0];
 };
@@ -136,7 +221,13 @@ const findUserById = async (id) => {
 module.exports = {
     findUserByEmail,
     findUserById,
+    findUserByVerificationToken,
+    markUserVerified,
+    setVerificationToken,
     createUser,
     updateUserPassword,
-    updateUserProfile
+    updateUserProfile,
+    setPasswordResetToken,
+    findUserByResetToken,
+    resetPasswordWithToken
 }

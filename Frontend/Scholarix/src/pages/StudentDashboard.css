@@ -31,57 +31,97 @@
    everywhere — handy for theming or dark mode later.
 ═══════════════════════════════════════════════════════════ */
 :root {
-  /* Primary palette mapped to theme tokens */
-  --color-navy:         var(--sx-text-primary);
-  --color-blue:         var(--sx-blue);
-  --color-blue-mid:     var(--sx-blue-hover);
-  --color-blue-light:   var(--sx-blue-bg);
-  --color-blue-border:  var(--sx-border);
+  /* Primary palette */
+  --color-navy:         #0D1B2A;   /* darkest text, sidebar */
+  --color-blue:         #1D4ED8;   /* primary interactive colour */
+  --color-blue-mid:     #2563EB;   /* hover state */
+  --color-blue-light:   #EFF6FF;   /* tinted backgrounds */
+  --color-blue-border:  #BFDBFE;   /* subtle borders */
 
   /* Accent */
-  --color-gold:         var(--sx-gold);
-  --color-gold-pale:    var(--sx-gold-bg);
-  --color-gold-dim:     var(--sx-gold-dim);
+  --color-gold:         #F5C842;   /* gold / amber accent */
+  --color-gold-pale:    #FEF9E7;   /* very light gold tint */
+  --color-gold-dim:     #D4A017;   /* darker gold for text */
 
   /* Semantic colours */
-  --color-green:        var(--sx-green);
-  --color-green-light:  var(--sx-green-bg);
-  --color-amber:        var(--sx-amber);
-  --color-amber-light:  var(--sx-amber-bg);
-  --color-red:          var(--sx-red);
-  --color-red-light:    var(--sx-red-bg);
-  --color-teal:         var(--sx-blue);
-  --color-teal-light:   var(--sx-blue-bg);
-  --color-purple:       var(--sx-purple);
-  --color-purple-light: var(--sx-purple-bg);
+  --color-green:        #059669;
+  --color-green-light:  #ECFDF5;
+  --color-amber:        #D97706;
+  --color-amber-light:  #FFFBEB;
+  --color-red:          #DC2626;
+  --color-red-light:    #FEF2F2;
+  --color-teal:         #0D9488;
+  --color-teal-light:   #F0FDFA;
+  --color-purple:       #7C3AED;
+  --color-purple-light: #F5F3FF;
 
   /* Neutral greys */
-  --color-bg:           var(--sx-bg);
-  --color-surface:      var(--sx-surface);
-  --color-border:       var(--sx-border);
-  --color-border-dark:  var(--sx-border);
-  --color-text:         var(--sx-text-primary);
-  --color-text-muted:   var(--sx-text-muted);
-  --color-text-faint:   var(--sx-text-muted);
+  --color-bg:           #F0F4F8;   /* page background */
+  --color-surface:      #FFFFFF;   /* cards, panels */
+  --color-border:       #E2E8F0;   /* default borders */
+  --color-border-dark:  #CBD5E1;
+  --color-text:         #1E293B;   /* body text */
+  --color-text-muted:   #64748B;   /* secondary text */
+  --color-text-faint:   #94A3B8;   /* timestamps, labels */
+  --color-text-dim:     #475569;   /* tag pills, outline-button labels */
+  --color-pill-bg:      rgba(15, 23, 42, 0.05); /* neutral tag/pill background */
+  --color-surface-hover: #F8FAFC; /* hover shade, one step off surface */
 
   /* Typography */
   --font-display:  "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-body:     "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono:     ui-monospace, Consolas, monospace;
+  --font-mono:     "JetBrains Mono", "Fira Code", monospace;
 
   /* Sizing */
-  --radius-sm:  8px;
+  --radius-sm:  6px;
   --radius:     12px;
-  --radius-lg:  16px;
+  --radius-lg:  18px;
   --radius-xl:  24px;
 
   /* Shadows */
-  --shadow-sm:  var(--sx-shadow-sm);
-  --shadow:     var(--sx-shadow);
-  --shadow-md:  var(--sx-shadow-md);
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.07);
+  --shadow:     0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-md:  0 8px 24px rgba(0, 0, 0, 0.10);
 
   /* Transitions */
   --transition: 180ms ease;
+
+  /* Extra hover tint used by notif/quick-action hover states */
+  --color-blue-tint-strong: #dbeafe;
+}
+
+/*
+ * Dark theme override.
+ * Redefines every neutral/surface/tinted token so the whole
+ * dashboard flips — cards, borders, text, and the light-tinted
+ * backgrounds used for icons, pills, and badges.
+ */
+:root[data-theme="dark"] {
+  --color-bg:           #0F172A;
+  --color-surface:      #1E293B;
+  --color-border:       #334155;
+  --color-border-dark:  #475569;
+  --color-text:         #F1F5F9;
+  --color-text-muted:   #94A3B8;
+  --color-text-faint:   #64748B;
+  --color-text-dim:     #CBD5E1;
+  --color-pill-bg:      rgba(255, 255, 255, 0.05);
+  --color-surface-hover: #2D3748;
+
+  --color-blue-light:   rgba(29, 78, 216, 0.16);
+  --color-blue-border:  rgba(59, 130, 246, 0.35);
+  --color-gold-pale:    rgba(245, 200, 66, 0.14);
+  --color-green-light:  rgba(5, 150, 105, 0.16);
+  --color-amber-light:  rgba(217, 119, 6, 0.16);
+  --color-red-light:    rgba(220, 38, 38, 0.16);
+  --color-teal-light:   rgba(13, 148, 136, 0.16);
+  --color-purple-light: rgba(124, 58, 237, 0.16);
+
+  --color-blue-tint-strong: rgba(59, 130, 246, 0.24);
+
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow:     0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-md:  0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 
@@ -124,7 +164,7 @@
   font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: 800;
-  color: var(--color-navy);
+  color: var(--color-text);
   margin: 0 0 4px;
   line-height: 1.2;
 }
@@ -188,7 +228,7 @@
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-text);
   margin: 0 0 16px;
   display: flex;
   align-items: center;
@@ -245,7 +285,7 @@
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--color-navy);
+  color: var(--color-text);
   margin: 0 0 2px;
 }
 
@@ -393,7 +433,7 @@
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 800;
-  color: var(--color-navy);
+  color: var(--color-text);
   line-height: 1;
   margin-bottom: 6px;
 }
@@ -476,7 +516,7 @@
   display: block;
   font-size: 0.825rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-text);
   /* Truncate long names with ellipsis */
   white-space: nowrap;
   overflow: hidden;
@@ -570,7 +610,7 @@
 }
 
 .notif-unread:hover {
-  background: #dbeafe;
+  background: var(--color-blue-tint-strong);
 }
 
 /* Icon circle */
@@ -598,7 +638,7 @@
   display: block;
   font-size: 0.825rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-text);
   margin-bottom: 2px;
 }
 
@@ -720,7 +760,7 @@
   font-family: var(--font-display);
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-text);
   margin: 0 0 4px;
   /* Leave room for the match badge */
   padding-right: 52px;
@@ -756,7 +796,7 @@
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--color-navy);
+  color: var(--color-text);
 }
 
 .sd-rec-deadline {
@@ -805,7 +845,7 @@
 }
 
 .sd-quick-action:hover {
-  background: #dbeafe;
+  background: var(--color-blue-tint-strong);
   transform: translateY(-2px);
   box-shadow: var(--shadow);
 }

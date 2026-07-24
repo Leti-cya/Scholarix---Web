@@ -25,11 +25,34 @@ CREATE TABLE IF NOT EXISTS users (
     contact_title VARCHAR(100),
     reg_number VARCHAR(100),
     description TEXT,
-    
+
+    -- Email/account verification
+    is_verified BOOLEAN DEFAULT false,
+    verification_token VARCHAR(255),
+    verification_expires TIMESTAMP,
+
+    -- Forgot-password flow (separate tokens from email verification)
+    password_reset_token VARCHAR(255),
+    password_reset_expires TIMESTAMP,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 SELECT * FROM users;
+
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(30) NOT NULL DEFAULT 'info',   -- info | success | warning | error
+    title VARCHAR(255) NOT NULL,
+    body TEXT,
+    link VARCHAR(255),                          -- optional in-app route to open
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);
 
 
 -- Scholarships Table (Provider CRUD)

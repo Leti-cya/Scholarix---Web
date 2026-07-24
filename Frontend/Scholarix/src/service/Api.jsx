@@ -26,6 +26,30 @@ export const checkEmailExists = (email) => {
     return Api.get(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
 };
 
+export const verifyEmail = (token) => {
+    return Api.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+};
+
+export const resendVerification = () => {
+    return Api.post("/api/auth/resend-verification");
+};
+
+export const getNotifications = () => {
+    return Api.get("/api/notifications");
+};
+
+export const getUnreadCount = () => {
+    return Api.get("/api/notifications/unread-count");
+};
+
+export const markNotificationRead = (id) => {
+    return Api.patch(`/api/notifications/${id}/read`);
+};
+
+export const markAllNotificationsRead = () => {
+    return Api.patch("/api/notifications/read-all");
+};
+
 export const getProfile = () => {
     return Api.get("/api/auth/profile");
 };
@@ -46,6 +70,16 @@ export const applyScholarship = (data) => {
     return Api.post("/api/applications", data);
 };
 
+// ─── Forgot / reset password ────────────────────────────────
+export const forgotPassword = (email) => {
+    return Api.post("/api/auth/forgot-password", { email });
+};
+
+export const verifyResetToken = (token) => {
+    return Api.get(`/api/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+};
+
+// data: { token, newPassword }
 export const resetPassword = (data) => {
     return Api.post("/api/auth/reset-password", data);
 };

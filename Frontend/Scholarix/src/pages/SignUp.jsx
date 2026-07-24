@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import "./Auth.css";
 import { registerUser, checkEmailExists } from "../service/Api";
+import ThemeToggle from "../component/ThemeToggle";
 
 const STEP_LABELS = {
   student:  ["Account",    "Personal",  "Academic"],
@@ -942,6 +943,7 @@ export default function SignUp() {
 
   return (
     <div className="auth-root">
+      <ThemeToggle style={{ position: "fixed", top: 20, right: 20, zIndex: 50 }} />
       <LeftPanel role={role} step={step} />
 
       <main className="auth-right" aria-label="Create your Scholarix account">

@@ -3,51 +3,74 @@
  * ---------------------
  * Location: src/pages/StudentDashboard.jsx
  *
- * The main baseline dashboard view for a logged-in student. Shows a personalised
- * welcome banner, profile summary, scholarship statistics, upcoming deadlines,
- * recent application tracking, AI-matched recommendations, and profile details.
+ * The main dashboard view for a logged-in student. Shows a personalised
+ * welcome, profile summary, scholarship statistics, upcoming deadlines,
+ * recent notifications, AI-matched recommendations, and quick actions.
+ *
+ * Fetches real data from the backend APIs (user profile, matches, applications).
  */
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Layout from "../component/Layout";
 import "./StudentDashboard.css";
+import NotificationBell from "../component/NotificationBell";
+import ThemeToggle from "../component/ThemeToggle";
 import {
   getProfile,
   updateProfile,
   getMatches,
   getStudentApplications,
-  applyScholarship
+  applyScholarship,
+  resendVerification
 } from "../service/Api";
 
 // ─────────────────────────────────────────────
 // HELPER FUNCTIONS
 // ─────────────────────────────────────────────
 
+/**
+ * Returns a CSS class name based on how many days are left.
+ * Used to colour the deadline badge: red (urgent), amber, green.
+ */
 function deadlineUrgency(daysLeft) {
   if (daysLeft <= 3) return "urgent";
   if (daysLeft <= 10) return "soon";
   return "ok";
 }
 
+/**
+ * Maps a notification type string to an emoji icon.
+ */
+function notificationIcon(type) {
+  const icons = { success: "🏆", warning: "⚠️", info: "💡", error: "❌" };
+  return icons[type] || "🔔";
+}
+
 // ─────────────────────────────────────────────
-// SMALL SUB-COMPONENTS (BASELINE WIDGETS)
+// SMALL SUB-COMPONENTS
 // ─────────────────────────────────────────────
 
+/**
+ * ProfileCard — student's photo/initials, name, course, and
+ * a completion progress bar that nudges them to fill their profile.
+ */
 function ProfileCard({ student, onEdit }) {
   const initials = student.firstName ? `${student.firstName[0]}${student.lastName ? student.lastName[0] : ""}` : "S";
 
   return (
     <div className="sd-profile-card">
-      <div style={{ textAlign: "center", marginBottom: "12px" }}>
-        <div
-          className="sd-avatar"
-          aria-label={`Avatar for ${student.firstName}`}
-          style={{ margin: "0 auto" }}
-        >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: "12px" }}>
+        <div className="sd-avatar" aria-label={`Avatar for ${student.firstName}`}>
           {initials}
         </div>
+        <button
+          className="sd-btn-outline"
+          style={{ padding: "6px 12px", fontSize: "12px", border: "1px solid #F5C842", color: "#F5C842", cursor: "pointer", background: "transparent" }}
+          onClick={onEdit}
+        >
+          ✏️ Edit Profile
+        </button>
       </div>
 
       <div className="sd-profile-info">
@@ -91,6 +114,9 @@ function ProfileCard({ student, onEdit }) {
   );
 }
 
+/**
+ * StatCard — one of the four summary tiles at the top of the dashboard.
+ */
 function StatCard({ stat }) {
   return (
     <div className={`sd-stat-card sd-stat-${stat.color}`}>
@@ -110,6 +136,9 @@ function StatCard({ stat }) {
   );
 }
 
+/**
+ * DeadlineItem — a single row in the upcoming deadlines list.
+ */
 function DeadlineItem({ item, onViewDetails }) {
   const urgency = deadlineUrgency(item.daysLeft);
   return (
@@ -159,7 +188,7 @@ function RecommendationCard({ item, onApply, onViewDetails, isApplied }) {
           Details
         </button>
         {isApplied ? (
-          <button className="sd-btn-primary" style={{ flex: 1, background: "var(--sx-border)", color: "var(--sx-text-muted)", cursor: "default", padding: "8px", fontSize: "13px" }} disabled>
+          <button className="sd-btn-primary" style={{ flex: 1, background: "#4A5568", cursor: "default", padding: "8px", fontSize: "13px" }} disabled>
             ✓ Applied
           </button>
         ) : (
@@ -173,7 +202,7 @@ function RecommendationCard({ item, onApply, onViewDetails, isApplied }) {
 }
 
 // ─────────────────────────────────────────────
-// MAIN DASHBOARD COMPONENT
+// MAIN COMPONENT
 // ─────────────────────────────────────────────
 
 export default function StudentDashboard() {
@@ -188,121 +217,19 @@ export default function StudentDashboard() {
     institution: "",
     country: "",
     gpa: "",
-    profileCompletion: 50
+    profileCompletion: 50,
+    isVerified: true
   });
 
   const [scholarships, setScholarships] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Edit profile modal state
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [profileForm, setProfileForm] = useState({});
-  const [savingProfile, setSavingProfile] = useState(false);
-
-  // Application modal state
-  const [applyModal, setApplyModal] = useState({ isOpen: false, scholarshipId: null, scholarshipName: "" });
-  const [essayText, setEssayText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-
-      try {
-        const profileRes = await getProfile();
-        const p = profileRes.data;
-        const fields = [p.first_name || p.firstName, p.last_name || p.lastName, p.email, p.level, p.field, p.institution, p.gpa, p.country];
-        const filled = fields.filter(val => val !== undefined && val !== null && String(val).trim() !== "").length;
-        const completionPct = Math.round((filled / fields.length) * 100);
-
-        const loadedStudent = {
-          firstName: p.first_name || p.firstName || "Student",
-          lastName: p.last_name || p.lastName || "",
-          email: p.email || "",
-          level: p.level || "",
-          field: p.field || "",
-          country: p.country || "",
-          institution: p.institution || "",
-          gpa: p.gpa || "",
-          profileCompletion: completionPct
-        };
-        setStudent(loadedStudent);
-        setProfileForm(loadedStudent);
-      } catch (err) {
-        console.error("Profile load error:", err);
-      }
-
-      try {
-        const matchesRes = await getMatches();
-        setScholarships(matchesRes.data || []);
-      } catch (err) {
-        console.error("Matches load error:", err);
-      }
-
-      try {
-        const appsRes = await getStudentApplications();
-        setApplications(appsRes.data || []);
-      } catch (err) {
-        console.error("Apps load error:", err);
-      }
-
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to load dashboard data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const handleOpenEditProfile = () => {
-    navigate("/profile");
-  };
-
-  const handleOpenApplyModal = (scholarshipId, scholarshipName) => {
-    setApplyModal({ isOpen: true, scholarshipId, scholarshipName });
-    setEssayText("");
-  };
-
-  const handleCloseApplyModal = () => {
-    setApplyModal({ isOpen: false, scholarshipId: null, scholarshipName: "" });
-    setEssayText("");
-  };
-
-  const handleSubmitApplication = async (e) => {
-    e.preventDefault();
-    if (!essayText.trim()) {
-      toast.error("An essay statement is required to apply.");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      await applyScholarship({ scholarship_id: applyModal.scholarshipId, essay: essayText });
-      toast.success("Application submitted successfully!");
-      handleCloseApplyModal();
-      fetchDashboardData();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to submit application.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 18) return "Good Afternoon";
-    return "Good Evening";
-  };
-
+  // Dynamic Statistics
   const totalAvailable = scholarships.length;
   const appliedCount = applications.length;
   const approvedCount = applications.filter(a => a.status === 'approved').length;
+  const pendingCount = applications.filter(a => a.status === 'submitted' || a.status === 'under_review' || a.status === 'shortlisted').length;
 
   const stats = [
     {
@@ -325,12 +252,171 @@ export default function StudentDashboard() {
       id: 3,
       label: "Awards Approved",
       value: approvedCount.toString(),
-      icon: "🏆",
+      icon: "✅",
       color: "green",
-      delta: "Accepted offers"
+      delta: "Congratulations!"
+    },
+    {
+      id: 4,
+      label: "Pending Review",
+      value: pendingCount.toString(),
+      icon: "⏳",
+      color: "amber",
+      delta: "Awaiting provider check"
     }
   ];
 
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // 1. Fetch Student Profile details
+      const profileRes = await getProfile();
+      const pData = profileRes.data;
+      
+      // Calculate completion score dynamically
+      const fields = [pData.first_name, pData.last_name, pData.country, pData.phone, pData.level, pData.field, pData.institution, pData.gpa];
+      const filledCount = fields.filter(f => f && f.trim() !== "" && f !== "Select level" && f !== "Select field" && f !== "Select country").length;
+      const completionPct = Math.round((filledCount / 8) * 100);
+
+      setStudent({
+        firstName: pData.first_name || "Student",
+        lastName: pData.last_name || "",
+        email: pData.email || "",
+        phone: pData.phone || "",
+        level: pData.level,
+        field: pData.field,
+        institution: pData.institution,
+        country: pData.country,
+        gpa: pData.gpa,
+        profileCompletion: completionPct,
+        isVerified: pData.is_verified !== false
+      });
+
+      // 2. Fetch Matched Scholarships
+      const matchesRes = await getMatches();
+      setScholarships(matchesRes.data);
+
+      // 3. Fetch Student Applications
+      const appsRes = await getStudentApplications();
+      setApplications(appsRes.data);
+
+    } catch (e) {
+      console.error("Dashboard Loading Error:", e);
+      toast.error("Failed to load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const [applyModal, setApplyModal] = useState({ isOpen: false, scholarshipId: null, scholarshipName: "" });
+  const [essayText, setEssayText] = useState("");
+  const [submittingApp, setSubmittingApp] = useState(false);
+
+  const [editProfileModal, setEditProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    country: "",
+    level: "",
+    field: "",
+    institution: "",
+    gpa: ""
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const handleOpenEditProfile = () => {
+    setProfileForm({
+      firstName: student.firstName || "",
+      lastName: student.lastName || "",
+      phone: student.phone || "",
+      country: student.country || "",
+      level: student.level || "",
+      field: student.field || "",
+      institution: student.institution || "",
+      gpa: student.gpa || ""
+    });
+    setEditProfileModal(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!profileForm.firstName.trim() || !profileForm.lastName.trim()) {
+      toast.error("First and last name are required.");
+      return;
+    }
+
+    try {
+      setSavingProfile(true);
+      await updateProfile(profileForm);
+      toast.success("Profile updated successfully!");
+      setEditProfileModal(false);
+      fetchDashboardData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update profile.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleOpenApplyModal = (scholarshipId, scholarshipName) => {
+    setApplyModal({ isOpen: true, scholarshipId, scholarshipName });
+    setEssayText("");
+  };
+
+  const handleCloseApplyModal = () => {
+    setApplyModal({ isOpen: false, scholarshipId: null, scholarshipName: "" });
+    setEssayText("");
+  };
+
+  const handleSubmitApplication = async (e) => {
+    e.preventDefault();
+    if (!essayText.trim()) {
+      toast.error("An essay statement is required to apply.");
+      return;
+    }
+
+    try {
+      setSubmittingApp(true);
+      await applyScholarship({ scholarshipId: applyModal.scholarshipId, essay: essayText });
+      toast.success("Application submitted successfully!");
+      handleCloseApplyModal();
+      fetchDashboardData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit application.");
+    } finally {
+      setSubmittingApp(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
+
+  const [resendingVerify, setResendingVerify] = useState(false);
+  const handleResendVerification = async () => {
+    try {
+      setResendingVerify(true);
+      await resendVerification();
+      toast.success("Verification email sent — check your inbox (or the backend console in dev).");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not send verification email.");
+    } finally {
+      setResendingVerify(false);
+    }
+  };
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  // Calculate upcoming deadlines (scholarships closing soonest)
   const upcomingDeadlines = scholarships
     .map(s => {
       const diffTime = new Date(s.deadline) - new Date();
@@ -343,241 +429,472 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <Layout role="student">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-          <div className="auth-spinner" style={{ width: '40px', height: '40px', border: '4px solid var(--sx-border)', borderTop: '4px solid var(--sx-gold)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <p style={{ marginTop: '16px', fontSize: '18px', fontWeight: '500', color: 'var(--sx-text-primary)' }}>Loading your dashboard...</p>
-        </div>
-      </Layout>
+      <div className="sd-loading-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--color-bg)', color: 'var(--color-text)' }}>
+        <div className="auth-spinner" style={{ width: '40px', height: '40px', border: '4px solid var(--color-border)', borderTop: '4px solid #F5C842', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <p style={{ marginTop: '16px', fontSize: '18px', fontWeight: '500' }}>Loading your dashboard...</p>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
     );
   }
 
-  // Display ONLY latest 2 applications on dashboard
-  const recentApplicationsDisplay = applications.slice(0, 2);
-
   return (
-    <Layout role="student">
-      <div className="sd-page" style={{ maxWidth: "1400px", margin: "0 auto", width: "100%", padding: "24px 32px 48px" }}>
-        {/* ── WELCOME BANNER (Cleaned Header) ────────────────────────────────── */}
-        <header className="sd-welcome-banner">
-          <div className="sd-welcome-text">
-            <h1 className="sd-welcome-heading">
-              {getGreeting()}, {student.firstName} 👋
-            </h1>
-            <p className="sd-welcome-sub">
-              {new Date().toLocaleDateString("en-GB", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-              {" · "}
-              {upcomingDeadlines.filter((d) => d.daysLeft <= 10).length} deadline(s) in the next 10 days
-            </p>
-          </div>
-        </header>
+    <div className="sd-page">
+      {/* ── WELCOME BANNER ────────────────────────────────────────────── */}
+      <header className="sd-welcome-banner">
+        <div className="sd-welcome-text">
+          <h1 className="sd-welcome-heading">
+            {greeting}, {student.firstName} 👋
+          </h1>
+          <p className="sd-welcome-sub">
+            {new Date().toLocaleDateString("en-GB", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+            {" · "}
+            {upcomingDeadlines.filter((d) => d.daysLeft <= 10).length} deadline(s) in the next 10 days
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <ThemeToggle />
+          <NotificationBell />
+          <button className="sd-btn-outline" style={{ border: '1px solid #38BDF8', color: '#38BDF8' }} onClick={() => navigate('/applications')}>
+            My Applications 📝
+          </button>
+          <button className="sd-btn-outline" style={{ border: '1px solid #F5C842', color: '#F5C842' }} onClick={() => navigate('/scholarships')}>
+            Explore All Scholarships 🔍
+          </button>
+          <button className="sd-btn-outline" style={{ border: '1px solid #EF4444', color: '#EF4444' }} onClick={handleLogout} aria-label="Sign out">
+            Sign Out
+          </button>
+        </div>
+      </header>
 
-        {/* ── MAIN BASELINE GRID ────────────────────────────────────────────── */}
-        <div className="sd-grid">
-          {/* ── LEFT COLUMN ──────────────────────────────────────────── */}
-          <aside className="sd-left-col">
-            {/* PROFILE CARD */}
-            <section className="sd-section" aria-labelledby="profile-heading">
-              <h2 className="sd-section-heading" id="profile-heading">
-                My Profile
+      {/* ── EMAIL VERIFICATION BANNER ─────────────────────────────────── */}
+      {!student.isVerified && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
+            background: '#FFFBEB', border: '1px solid #FDE68A', borderLeft: '5px solid #F5C842',
+            borderRadius: '12px', padding: '14px 20px', marginBottom: '24px'
+          }}
+        >
+          <span style={{ color: '#92400E', fontSize: '0.9rem', fontWeight: 600 }}>
+            📩 Please verify your email address to secure your account and unlock all features.
+          </span>
+          <button
+            className="sd-btn-primary"
+            style={{ background: '#D97706', padding: '8px 16px', fontSize: '0.82rem' }}
+            onClick={handleResendVerification}
+            disabled={resendingVerify}
+          >
+            {resendingVerify ? 'Sending…' : 'Resend verification email'}
+          </button>
+        </div>
+      )}
+
+      {/* ── MAIN GRID ──────────────────────────────────────────────────── */}
+      <div className="sd-grid">
+        {/* ── LEFT COLUMN ──────────────────────────────────────────── */}
+        <aside className="sd-left-col">
+          {/* PROFILE CARD */}
+          <section className="sd-section" aria-labelledby="profile-heading">
+            <h2 className="sd-section-heading" id="profile-heading">
+              My Profile
+            </h2>
+            <ProfileCard student={student} onEdit={handleOpenEditProfile} />
+          </section>
+
+          {/* UPCOMING DEADLINES */}
+          <section className="sd-section" aria-labelledby="deadlines-heading">
+            <div className="sd-section-header">
+              <h2 className="sd-section-heading" id="deadlines-heading">
+                Upcoming Deadlines
               </h2>
-              <ProfileCard student={student} onEdit={handleOpenEditProfile} />
-            </section>
-
-            {/* UPCOMING DEADLINES */}
-            <section className="sd-section" aria-labelledby="deadlines-heading">
-              <div className="sd-section-header">
-                <h2 className="sd-section-heading" id="deadlines-heading">
-                  Upcoming Deadlines
-                </h2>
-              </div>
-              {upcomingDeadlines.length > 0 ? (
-                <ul className="sd-deadline-list" aria-label="Upcoming scholarship deadlines">
-                  {upcomingDeadlines.map((item) => (
-                    <DeadlineItem key={item.id} item={item} onViewDetails={(sId) => navigate('/scholarships/' + sId)} />
-                  ))}
-                </ul>
-              ) : (
-                <p style={{ color: 'var(--sx-text-muted)', fontSize: '14px', padding: '12px' }}>No upcoming deadlines for your matched scholarships.</p>
-              )}
-            </section>
-
-            {/* RECENT APPLICATIONS TRACKING (LATEST 2) */}
-            <section className="sd-section" aria-labelledby="notif-heading">
-              <div className="sd-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 className="sd-section-heading" id="notif-heading">
-                  Application Tracking
-                </h2>
-                <button
-                  style={{ background: 'none', border: 'none', color: 'var(--sx-gold)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}
-                  onClick={() => navigate('/applications')}
-                >
-                  View All →
-                </button>
-              </div>
-              {recentApplicationsDisplay.length > 0 ? (
-                <ul className="sd-notif-list" aria-label="Submitted applications list">
-                  {recentApplicationsDisplay.map((item) => {
-                    let statusColor = "notif-info";
-                    let statusEmoji = "⏳";
-                    if (item.status === "approved") {
-                      statusColor = "notif-success";
-                      statusEmoji = "🎉";
-                    } else if (item.status === "rejected") {
-                      statusColor = "notif-error";
-                      statusEmoji = "❌";
-                    } else if (item.status === "shortlisted") {
-                      statusColor = "notif-warning";
-                      statusEmoji = "📋";
-                    }
-
-                    return (
-                      <li key={item.application_id} className="sd-notif-item" style={{ cursor: "default" }}>
-                        <span className={`sd-notif-icon ${statusColor}`} aria-hidden="true">
-                          {statusEmoji}
-                        </span>
-                        <div className="sd-notif-content">
-                          <strong className="sd-notif-title">{item.scholarship_name}</strong>
-                          <p className="sd-notif-body">
-                            Status: <span style={{ textTransform: "capitalize", fontWeight: "600" }}>{item.status.replace("_", " ")}</span>
-                          </p>
-                          <time className="sd-notif-time">
-                            Applied: {new Date(item.submitted_at).toLocaleDateString()}
-                          </time>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p style={{ color: 'var(--sx-text-muted)', fontSize: '14px', padding: '12px' }}>You haven't submitted any applications yet.</p>
-              )}
-            </section>
-          </aside>
-
-          {/* ── RIGHT COLUMN ─────────────────────────────────────────── */}
-          <div className="sd-right-col">
-            {/* STATISTICS ROW */}
-            <section aria-labelledby="stats-heading">
-              <h2 className="sd-sr-only" id="stats-heading">
-                Scholarship statistics
-              </h2>
-              <div className="sd-stats-grid">
-                {stats.map((stat) => (
-                  <StatCard key={stat.id} stat={stat} />
+            </div>
+            {upcomingDeadlines.length > 0 ? (
+              <ul className="sd-deadline-list" aria-label="Upcoming scholarship deadlines">
+                {upcomingDeadlines.map((item) => (
+                  <DeadlineItem key={item.id} item={item} onViewDetails={(sId) => navigate('/scholarships/' + sId)} />
                 ))}
-              </div>
-            </section>
+              </ul>
+            ) : (
+              <p style={{ color: 'var(--sd-muted)', fontSize: '14px', padding: '12px' }}>No upcoming deadlines for your matched scholarships.</p>
+            )}
+          </section>
 
-            {/* PROFILE DETAILS (QUICK ACTIONS) */}
-            <section className="sd-section" aria-labelledby="qa-heading">
-              <div className="sd-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 className="sd-section-heading" id="qa-heading">
-                  My Profile Details
+          {/* SUBMITTED APPLICATIONS LIST */}
+          <section className="sd-section" aria-labelledby="notif-heading">
+            <div className="sd-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 className="sd-section-heading" id="notif-heading">
+                Application Tracking
+              </h2>
+              <button
+                style={{ background: 'none', border: 'none', color: '#F5C842', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}
+                onClick={() => navigate('/applications')}
+              >
+                View All →
+              </button>
+            </div>
+            {applications.length > 0 ? (
+              <ul className="sd-notif-list" aria-label="Submitted applications list">
+                {applications.map((item) => {
+                  let statusColor = "notif-info";
+                  let statusEmoji = "⏳";
+                  if (item.status === "approved") {
+                    statusColor = "notif-success";
+                    statusEmoji = "🎉";
+                  } else if (item.status === "rejected") {
+                    statusColor = "notif-error";
+                    statusEmoji = "❌";
+                  } else if (item.status === "shortlisted") {
+                    statusColor = "notif-warning";
+                    statusEmoji = "📋";
+                  }
+
+                  return (
+                    <li key={item.application_id} className="sd-notif-item" style={{ cursor: "default" }}>
+                      <span className={`sd-notif-icon ${statusColor}`} aria-hidden="true">
+                        {statusEmoji}
+                      </span>
+                      <div className="sd-notif-content">
+                        <strong className="sd-notif-title">{item.scholarship_name}</strong>
+                        <p className="sd-notif-body">
+                          Status: <span style={{ textTransform: "capitalize", fontWeight: "600" }}>{item.status.replace("_", " ")}</span>
+                        </p>
+                        <time className="sd-notif-time">
+                          Applied: {new Date(item.submitted_at).toLocaleDateString()}
+                        </time>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p style={{ color: 'var(--sd-muted)', fontSize: '14px', padding: '12px' }}>You haven't submitted any applications yet.</p>
+            )}
+          </section>
+        </aside>
+
+        {/* ── RIGHT COLUMN ─────────────────────────────────────────── */}
+        <div className="sd-right-col">
+          {/* STATISTICS ROW */}
+          <section aria-labelledby="stats-heading">
+            <h2 className="sd-sr-only" id="stats-heading">
+              Scholarship statistics
+            </h2>
+            <div className="sd-stats-grid">
+              {stats.map((stat) => (
+                <StatCard key={stat.id} stat={stat} />
+              ))}
+            </div>
+          </section>
+
+          {/* QUICK ACTIONS */}
+          <section className="sd-section" aria-labelledby="qa-heading">
+            <h2 className="sd-section-heading" id="qa-heading">
+              My Profile Details
+            </h2>
+            <div style={{ background: 'var(--color-surface)', padding: '16px', borderRadius: '12px', border: '1px solid var(--color-border)', color: 'var(--color-text-dim)', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div><strong>Registered Email:</strong> {student.email}</div>
+              <div><strong>Education Level:</strong> {student.level || "Not specified"}</div>
+              <div><strong>Field of Study:</strong> {student.field || "Not specified"}</div>
+              <div><strong>Institution:</strong> {student.institution || "Not specified"}</div>
+              <div><strong>GPA Score:</strong> {student.gpa || "Not specified"}</div>
+            </div>
+          </section>
+
+          {/* RECOMMENDED SCHOLARSHIPS */}
+          <section className="sd-section" aria-labelledby="rec-heading">
+            <div className="sd-section-header">
+              <div>
+                <h2 className="sd-section-heading" id="rec-heading">
+                  Recommended For You
                 </h2>
-                <button
-                  onClick={() => navigate('/profile')}
-                  style={{ background: 'none', border: 'none', color: 'var(--sx-gold)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}
-                >
-                  Edit Profile →
-                </button>
+                <p className="sd-section-sub">
+                  Matches based on your profile criteria ({student.level}, {student.field}, {student.country})
+                </p>
               </div>
-              <div style={{ background: 'var(--sx-surface)', padding: '18px', borderRadius: '12px', border: '1px solid var(--sx-border)', color: 'var(--sx-text-primary)', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div><strong>Registered Email:</strong> {student.email}</div>
-                <div><strong>Education Level:</strong> {student.level || "Not specified"}</div>
-                <div><strong>Field of Study:</strong> {student.field || "Not specified"}</div>
-                <div><strong>Institution:</strong> {student.institution || "Not specified"}</div>
-                <div><strong>GPA Score:</strong> {student.gpa || "Not specified"}</div>
+            </div>
+            {scholarships.length > 0 ? (
+              <div className="sd-rec-grid">
+                {scholarships.map((item) => {
+                  const isAlreadyApplied = applications.some(a => a.scholarship_id === item.id);
+                  return (
+                    <RecommendationCard
+                      key={item.id}
+                      item={item}
+                      onApply={handleOpenApplyModal}
+                      onViewDetails={(sId) => navigate('/scholarships/' + sId)}
+                      isApplied={isAlreadyApplied}
+                    />
+                  );
+                })}
               </div>
-            </section>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '15px' }}>No scholarships currently match your profile criteria.</p>
+                <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>Try editing your profile details to see other opportunities.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
 
-            {/* RECOMMENDED SCHOLARSHIPS (AI MATCHES) */}
-            <section className="sd-section" aria-labelledby="rec-heading">
-              <div className="sd-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h2 className="sd-section-heading" id="rec-heading">
-                    Recommended For You
-                  </h2>
-                  <p className="sd-section-sub">
-                    Matches based on your profile criteria ({student.level || 'All'}, {student.field || 'All'}, {student.country || 'Global'})
-                  </p>
-                </div>
+      {/* Application Modal */}
+      {applyModal.isOpen && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(15, 23, 42, 0.8)",
+          backdropFilter: "blur(4px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "16px"
+        }}>
+          <div style={{
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "100%",
+            maxWidth: "540px",
+            color: "var(--color-text)",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0 }}>
+                Apply for {applyModal.scholarshipName}
+              </h3>
+              <button
+                onClick={handleCloseApplyModal}
+                style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "14px", marginBottom: "20px", lineHeight: "1.5" }}>
+              Please write a brief essay or personal statement explaining your eligibility and how this scholarship will support your educational goals.
+            </p>
+            <form onSubmit={handleSubmitApplication}>
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "8px" }}>
+                  Personal Statement / Qualification Essay
+                </label>
+                <textarea
+                  rows={6}
+                  value={essayText}
+                  onChange={(e) => setEssayText(e.target.value)}
+                  placeholder="Explain why you qualify for this scholarship..."
+                  style={{
+                    width: "100%",
+                    background: "var(--color-bg)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "8px",
+                    padding: "12px",
+                    color: "var(--color-text)",
+                    fontSize: "14px",
+                    resize: "vertical",
+                    outline: "none"
+                  }}
+                  autoFocus
+                />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
                 <button
-                  onClick={() => navigate('/scholarships')}
-                  style={{ background: 'none', border: 'none', color: 'var(--sx-gold)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}
+                  type="button"
+                  onClick={handleCloseApplyModal}
+                  style={{
+                    padding: "10px 18px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    border: "1px solid var(--color-border-dark)",
+                    color: "var(--color-text-dim)",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
                 >
-                  View All →
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingApp}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+                    border: "none",
+                    color: "white",
+                    opacity: submittingApp ? 0.7 : 1
+                  }}
+                >
+                  {submittingApp ? "Submitting..." : "Submit Application →"}
                 </button>
               </div>
-              {scholarships.length > 0 ? (
-                <div className="sd-rec-grid">
-                  {scholarships.slice(0, 4).map((item) => {
-                    const isAlreadyApplied = applications.some(a => a.scholarship_id === item.id);
-                    return (
-                      <RecommendationCard
-                        key={item.id}
-                        item={item}
-                        onApply={handleOpenApplyModal}
-                        onViewDetails={(sId) => navigate('/scholarships/' + sId)}
-                        isApplied={isAlreadyApplied}
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '36px', background: 'var(--sx-surface)', borderRadius: '12px', border: '1px solid var(--sx-border)' }}>
-                  <p style={{ color: 'var(--sx-text-secondary)', fontSize: '15px' }}>No scholarships currently match your profile criteria.</p>
-                  <button onClick={() => navigate('/profile')} style={{ marginTop: '8px', background: 'none', border: 'none', color: 'var(--sx-gold)', cursor: 'pointer', fontWeight: '600' }}>
-                    Update your profile details →
-                  </button>
-                </div>
-              )}
-            </section>
+            </form>
           </div>
         </div>
+      )}
+      {/* ── EDIT PROFILE MODAL ─────────────────────────────────────── */}
+      {editProfileModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(15, 23, 42, 0.85)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          padding: "20px"
+        }}>
+          <div style={{
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "100%",
+            maxWidth: "600px",
+            color: "var(--color-text)",
+            maxHeight: "90vh",
+            overflowY: "auto",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "700", margin: 0, color: "#F5C842" }}>
+                ✏️ Edit Student Profile
+              </h3>
+              <button
+                onClick={() => setEditProfileModal(false)}
+                style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontSize: "20px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ color: "var(--color-text-muted)", fontSize: "14px", marginBottom: "20px" }}>
+              Update your personal and academic details to improve your AI scholarship match recommendations.
+            </p>
 
-        {/* APPLY MODAL */}
-        {applyModal.isOpen && (
-          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15, 23, 42, 0.8)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-            <div style={{ background: "var(--sx-surface)", border: "1px solid var(--sx-border)", borderRadius: "16px", padding: "32px", maxWidth: "540px", width: "100%" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h3 style={{ fontSize: "20px", fontWeight: "700", color: "var(--sx-text-primary)", margin: 0 }}>
-                  Apply for {applyModal.scholarshipName}
-                </h3>
-                <button onClick={handleCloseApplyModal} style={{ background: "none", border: "none", color: "var(--sx-text-muted)", fontSize: "20px", cursor: "pointer" }}>✕</button>
-              </div>
-              <form onSubmit={handleSubmitApplication}>
-                <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--sx-text-secondary)", marginBottom: "8px" }}>
-                    Personal Statement / Qualification Essay
-                  </label>
-                  <textarea
-                    rows={6}
-                    value={essayText}
-                    onChange={(e) => setEssayText(e.target.value)}
-                    placeholder="Explain why you qualify for this scholarship..."
+            <form onSubmit={handleSaveProfile}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>First Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.firstName}
+                    onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
                     required
-                    style={{ width: "100%", background: "var(--sx-bg)", border: "1px solid var(--sx-border)", borderRadius: "8px", padding: "12px", color: "var(--sx-text-primary)", fontSize: "14px", resize: "vertical" }}
                   />
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-                  <button type="button" onClick={handleCloseApplyModal} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", border: "1px solid var(--sx-border)", color: "var(--sx-text-secondary)", cursor: "pointer" }}>
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={submitting} style={{ padding: "10px 20px", borderRadius: "8px", background: "var(--sx-gold)", color: "#0F172A", fontWeight: "700", border: "none", cursor: "pointer" }}>
-                    {submitting ? "Submitting..." : "Submit Application"}
-                  </button>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>Last Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.lastName}
+                    onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                    required
+                  />
                 </div>
-              </form>
-            </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>Phone Number</label>
+                  <input
+                    type="text"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    placeholder="+1 555 0192"
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>Country</label>
+                  <input
+                    type="text"
+                    value={profileForm.country}
+                    onChange={(e) => setProfileForm({ ...profileForm, country: e.target.value })}
+                    placeholder="e.g. United Kingdom, Nepal"
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>Academic Level</label>
+                  <input
+                    type="text"
+                    value={profileForm.level}
+                    onChange={(e) => setProfileForm({ ...profileForm, level: e.target.value })}
+                    placeholder="e.g. Undergraduate (Bachelor's)"
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>Field of Study</label>
+                  <input
+                    type="text"
+                    value={profileForm.field}
+                    onChange={(e) => setProfileForm({ ...profileForm, field: e.target.value })}
+                    placeholder="e.g. Computer Science & IT"
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "24px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>Institution / University</label>
+                  <input
+                    type="text"
+                    value={profileForm.institution}
+                    onChange={(e) => setProfileForm({ ...profileForm, institution: e.target.value })}
+                    placeholder="e.g. University of Oxford"
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "var(--color-text-dim)", marginBottom: "6px" }}>GPA Score</label>
+                  <input
+                    type="text"
+                    value={profileForm.gpa}
+                    onChange={(e) => setProfileForm({ ...profileForm, gpa: e.target.value })}
+                    placeholder="e.g. 3.8 / 4.0"
+                    style={{ width: "100%", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "8px", padding: "10px", color: "var(--color-text)", fontSize: "14px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditProfileModal(false)}
+                  style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", border: "1px solid var(--color-border-dark)", color: "var(--color-text-dim)", fontWeight: "600", cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProfile}
+                  style={{ padding: "10px 20px", borderRadius: "8px", background: "#F5C842", border: "none", color: "#0F172A", fontWeight: "700", cursor: "pointer", opacity: savingProfile ? 0.7 : 1 }}
+                >
+                  {savingProfile ? "Saving Changes..." : "Save Profile →"}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
-    </Layout>
+        </div>
+      )}
+    </div>
   );
 }

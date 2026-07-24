@@ -22,6 +22,7 @@ import React, { useState } from "react";
 import "./Auth.css";
 import { loginUser } from "../service/Api";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../component/ThemeToggle";
 
 // ─────────────────────────────────────────────────────────
 // CONSTANTS
@@ -466,6 +467,7 @@ export default function Login() {
 
   return (
     <div className="auth-root">
+      <ThemeToggle style={{ position: "fixed", top: 20, right: 20, zIndex: 50 }} />
 
       {/* Left: lighter panel with illustration */}
       <LeftPanel role={role} />

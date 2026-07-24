@@ -91,6 +91,52 @@
   --lp-transition: 180ms ease;
 }
 
+/*
+ * Dark theme override.
+ * The navy Hero / How-it-Works / Stats / CTA / Footer sections
+ * are a fixed brand block and stay identical in both themes —
+ * only the light content sections (nav, featured scholarships,
+ * benefits, testimonials, FAQ) flip.
+ */
+:root[data-theme="dark"] {
+  --lp-bg:            #0F172A;
+  --lp-surface:       #1E293B;
+  --lp-border:        #334155;
+  --lp-border-dark:   #475569;
+  --lp-text:          #F1F5F9;
+  --lp-text-muted:    #94A3B8;
+  --lp-text-faint:    #64748B;
+
+  --lp-blue-light:    rgba(29, 78, 216, 0.16);
+  --lp-blue-border:   rgba(59, 130, 246, 0.35);
+  --lp-teal-light:    rgba(13, 148, 136, 0.16);
+  --lp-green-light:   rgba(5, 150, 105, 0.16);
+  --lp-purple-light:  rgba(124, 58, 237, 0.16);
+  --lp-amber-light:   rgba(217, 119, 6, 0.16);
+
+  --lp-shadow-sm:  0 1px 4px rgba(0,0,0,.35);
+  --lp-shadow:     0 4px 16px rgba(0,0,0,.4);
+  --lp-shadow-md:  0 8px 32px rgba(0,0,0,.45);
+  --lp-shadow-lg:  0 16px 48px rgba(0,0,0,.55);
+
+  .lp-nav {
+    background: rgba(15, 23, 42, 0.9);
+  }
+
+  .lp-nav--scrolled {
+    border-color: var(--lp-border);
+  }
+
+  .lp-nav__logo-text,
+  .lp-hamburger-bar {
+    color: var(--lp-text);
+  }
+
+  .lp-hamburger-bar {
+    background: var(--lp-text);
+  }
+}
+
 
 /* ═══════════════════════════════════════════════════════
    2. GLOBAL RESET & BASE
@@ -163,7 +209,7 @@
   font-family: var(--lp-font-display);
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 800;
-  color: var(--lp-navy);
+  color: var(--lp-text);
   line-height: 1.15;
   margin-bottom: 16px;
 }
@@ -375,7 +421,7 @@
   font-family: var(--lp-font-display);
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--lp-navy);
+  color: var(--lp-text);
 }
 
 /* Desktop nav links */
@@ -397,7 +443,7 @@
 }
 
 .lp-nav__link:hover {
-  color: var(--lp-navy);
+  color: var(--lp-text);
   background: var(--lp-bg);
 }
 
@@ -700,7 +746,7 @@
   font-family: var(--lp-font-display);
   font-size: 2.4rem;
   font-weight: 800;
-  color: var(--lp-navy);
+  color: var(--lp-text);
   line-height: 1;
   margin-bottom: 2px;
 }
@@ -760,7 +806,7 @@
 .lp-hero__card-deadline-name {
   font-size: 0.825rem;
   font-weight: 700;
-  color: var(--lp-navy);
+  color: var(--lp-text);
 }
 
 .lp-hero__card-award-amount {
@@ -899,7 +945,7 @@
   font-family: var(--lp-font-display);
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--lp-navy);
+  color: var(--lp-text);
   margin-bottom: 4px;
   line-height: 1.3;
 }
@@ -946,7 +992,7 @@
   font-family: var(--lp-font-display);
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--lp-navy);
+  color: var(--lp-text);
 }
 
 .lp-schol-card__deadline {
@@ -1002,7 +1048,7 @@
   font-family: var(--lp-font-display);
   font-size: 1rem;
   font-weight: 700;
-  color: var(--lp-navy);
+  color: var(--lp-text);
   margin-bottom: 10px;
   line-height: 1.3;
 }
@@ -1191,7 +1237,7 @@
   font-family: var(--lp-font-display);
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--lp-navy);
+  color: var(--lp-text);
   margin-bottom: 2px;
 }
 
@@ -1252,7 +1298,7 @@
   font-family: var(--lp-font-display);
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--lp-navy);
+  color: var(--lp-text);
   text-align: left;
   transition: color var(--lp-transition);
 }
